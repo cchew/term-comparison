@@ -1,6 +1,9 @@
 [build]
   base    = "web"
   command = "npm install && npm run build"
+  # NOTE: publish is relative to base per Netlify docs (should be "dist"), but this CLI-created
+  # site (sites:create + deploy --prod) only worked with "web/dist". Untested on git-integration
+  # deploys — if switching via `netlify init`, re-verify this path before trusting it.
   publish = "web/dist"
 
 [[redirects]]
