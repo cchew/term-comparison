@@ -10,7 +10,7 @@ GRAPH_JSON = LEX_AU_GRAPH_REPO / "graph.json"
 
 image = (
     modal.Image.debian_slim(python_version="3.12")
-    .pip_install("fastapi>=0.115", "networkx>=3.3", "lxml>=5.3")
+    .pip_install("fastapi>=0.115", "networkx>=3.3", "lxml>=5.3", "anthropic>=0.40.0")
     .add_local_python_source("lexaugraph")
     .add_local_python_source("term_comparison")
     .add_local_file(str(GRAPH_JSON), "/root/graph.json")
@@ -19,14 +19,17 @@ image = (
 app = modal.App("term-comparison", image=image)
 
 
-@app.function(min_containers=1)
+@app.function(min_containers=1, secrets=[modal.Secret.from_name("anthropic-api-key")])
 @modal.asgi_app()
 def fastapi_app():
+    import os
     from pathlib import Path as _Path
+    import anthropic
     from lexaugraph.graph import LexAuGraph
     from lexaugraph.resolver import DefinitionResolver
     from term_comparison.api import create_app
 
     graph = LexAuGraph.load(_Path("/root/graph.json"))
     resolver = DefinitionResolver(graph)
-    return create_app(resolver)
+    client = anthropic.Anthropic() if os.environ.get("ANTHROPIC_API_KEY") else None
+    return create_app(resolver, client=client)
