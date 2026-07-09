@@ -4,9 +4,6 @@ Innovation Month 2026 "Build a Bureaucrat Bot" entry. Shows how ordinary legal t
 (e.g. "small business", "income support payment") are defined differently across
 different Commonwealth Acts, with citations. Built on `lex-au-graph`'s `DefinitionResolver`.
 
-Full design spec: `../../../docs/superpowers/specs/2026-07-09-term-comparison-design.md`
-(in the executive-assistant repo).
-
 ## Stack position
 
 Sits on top of the AU Legislative Intelligence Stack:
@@ -19,7 +16,8 @@ This repo               — thin FastAPI wrapper around lex-au-graph's Definitio
 
 `lex-au-graph` is a direct runtime dependency (installed editable, not vendored) and
 its `graph.json` — built from the `lex-au` corpus — is required before this service
-can serve real data. See `../../lex-au-graph/repo/README.md` for how to build it.
+can serve real data. See [lex-au-graph's README](https://github.com/cchew/lex-au-graph#readme)
+for how to build it.
 
 ## Setup
 
