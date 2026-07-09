@@ -7,7 +7,7 @@ from lexaugraph.resolver import DefinitionResolver
 
 GRAPH_PATH = Path(__file__).resolve().parents[3] / "lex-au-graph" / "repo" / "graph.json"
 
-FLAGSHIP_TERMS = ["small business", "income support payment"]
+FLAGSHIP_TERMS = ["personal information", "australian resident"]
 
 
 def main() -> None:
