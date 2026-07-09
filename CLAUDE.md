@@ -5,8 +5,11 @@ Backend for the IM2026 "Build a Bureaucrat Bot" entry. Wraps `lex-au-graph`'s
 
 ## Stack position
 
-Depends on `../../lex-au-graph/repo` (Layer 2.5 of the AU Legislative Intelligence
-Stack) — installed editable, not vendored. Its `graph.json` must be built first.
+Depends on `../../lex-au-graph/repo` (retrieval layer of the AU Legislative Intelligence
+Stack) — installed editable, not vendored. Its `graph.json` must be built first. Peer to
+ClauseKit (`../../clause-kit/repo`) in the stack's applications layer — both are
+consumer-facing tools built on the same corpus, ClauseKit via rule extraction, this project
+directly on graph-based definition resolution.
 
 ## Running locally
 
