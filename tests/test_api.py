@@ -1,6 +1,9 @@
 # tests/test_api.py
 from __future__ import annotations
 
+import json
+from unittest.mock import MagicMock
+
 from fastapi.testclient import TestClient
 
 from lexaugraph.graph import LexAuGraph
@@ -93,3 +96,40 @@ def test_get_definitions_404_for_unknown_term():
     response = client.get("/definitions", params={"term": "nonexistent term"})
 
     assert response.status_code == 404
+
+
+def test_get_definitions_populates_difference_summary_with_client():
+    resolver = _build_test_resolver()
+    mock_response = MagicMock()
+    mock_response.content = [MagicMock(text=json.dumps({
+        "summary": "The Acts describe the same payment concept in different words.",
+        "differences": [
+            {
+                "act_title": "Social Security Act 1991",
+                "quote": "a social security benefit or a social security pension",
+                "note": "defines the concept directly",
+            },
+        ],
+        "confidence": "high",
+    }))]
+    mock_client = MagicMock()
+    mock_client.messages.create.return_value = mock_response
+
+    app = create_app(resolver, client=mock_client)
+    client = TestClient(app)
+
+    response = client.get("/definitions", params={"term": "income support payment"})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["difference_summary"] == "The Acts describe the same payment concept in different words."
+
+
+def test_get_definitions_difference_summary_none_without_client():
+    resolver = _build_test_resolver()
+    app = create_app(resolver)  # no client — default behaviour, unchanged from before this task
+    client = TestClient(app)
+
+    response = client.get("/definitions", params={"term": "income support payment"})
+
+    assert response.json()["difference_summary"] is None
