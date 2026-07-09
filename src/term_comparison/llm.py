@@ -1,0 +1,117 @@
+# src/term_comparison/llm.py
+from __future__ import annotations
+import json
+import os
+import re
+
+import anthropic
+
+from term_comparison.models import DefinitionOut
+
+_SYSTEM_PROMPT = (
+    "You are assisting a legislative research tool that compares how a legal term is "
+    "defined across different Commonwealth Acts of Parliament. "
+    "Describe ONLY observable differences already present in the definition text provided "
+    "(different thresholds, different tests, different reference points, different scope). "
+    "Do NOT speculate on legislative intent, drafting history, or policy rationale. "
+    "Do NOT draw any eligibility or compliance conclusion. "
+    "Quote evidence verbatim from the definition text you were given. "
+    "Return ONLY valid JSON — no markdown fences, no commentary."
+)
+
+_JSON_SCHEMA_HINT = (
+    '{"summary": "one paragraph, plain language, describing the observable textual differences", '
+    '"differences": [{"act_title": "exact Act title as given", '
+    '"quote": "verbatim quoted passage from the corresponding Act definition text", '
+    '"note": "short description of what is different about this Act version"}, ...], '
+    '"confidence": "high|medium|low"}'
+)
+
+
+def _normalise(text: str) -> str:
+    """Lowercase, collapse whitespace, strip punctuation for substring matching."""
+    text = text.lower()
+    text = re.sub(r"[^\w\s]", " ", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def verify_quote(quote: str, source_text: str) -> bool:
+    """Check a quoted passage exists (whitespace/punctuation-insensitive) in source_text."""
+    normalised_quote = _normalise(quote)
+    return bool(normalised_quote) and normalised_quote in _normalise(source_text)
+
+
+def _default_model() -> str:
+    return os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-6")
+
+
+def build_difference_prompt(term: str, definitions: list[DefinitionOut]) -> str:
+    parts = [
+        f"## Term: {term}",
+        "",
+        "### Definitions retrieved from Commonwealth Acts",
+    ]
+    for d in definitions:
+        parts += [
+            "",
+            f"**{d.act_title}** ({d.section_eid}):",
+            d.definition_text,
+        ]
+    parts += [
+        "",
+        "### Task",
+        f"Compare these {len(definitions)} definitions of '{term}' and describe only the "
+        "observable differences in the text itself. Quote verbatim from each definition as evidence.",
+        "Return ONLY this JSON schema:",
+        _JSON_SCHEMA_HINT,
+    ]
+    return "\n".join(parts)
+
+
+def summarise_differences(
+    term: str,
+    definitions: list[DefinitionOut],
+    client: anthropic.Anthropic,
+) -> str | None:
+    """Return a plain-language, quote-verified summary of observable differences.
+
+    Returns None if there's nothing to compare (fewer than 2 definitions), the LLM
+    call fails, the response isn't valid JSON, or none of the claimed differences'
+    quotes verify against their Act's definition text — never surface an unverified
+    claim to the user.
+    """
+    if len(definitions) < 2:
+        return None
+
+    by_act = {d.act_title: d for d in definitions}
+    prompt = build_difference_prompt(term, definitions)
+
+    try:
+        response = client.messages.create(
+            model=_default_model(),
+            max_tokens=1024,
+            temperature=0,
+            system=_SYSTEM_PROMPT,
+            messages=[{"role": "user", "content": prompt}],
+        )
+    except anthropic.APIError:
+        return None
+
+    raw = response.content[0].text.strip()
+    raw = re.sub(r"^```json\n?", "", raw)
+    raw = re.sub(r"\n?```$", "", raw).strip()
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        return None
+
+    verified = 0
+    for diff in data.get("differences", []):
+        source = by_act.get(diff.get("act_title", ""))
+        if source and verify_quote(diff.get("quote", ""), source.definition_text):
+            verified += 1
+
+    if verified == 0:
+        return None
+
+    return data.get("summary")
