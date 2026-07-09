@@ -1,7 +1,7 @@
 # IM2026 Term-Comparison Tool
 
 Innovation Month 2026 "Build a Bureaucrat Bot" entry. Shows how ordinary legal terms
-(e.g. "small business", "income support payment") are defined differently across
+(e.g. "personal information", "australian resident") are defined differently across
 different Commonwealth Acts, with citations. Built on `lex-au-graph`'s `DefinitionResolver`.
 
 ## Stack position
@@ -9,9 +9,9 @@ different Commonwealth Acts, with citations. Built on `lex-au-graph`'s `Definiti
 Sits on top of the AU Legislative Intelligence Stack:
 
 ```
-Layer 1: lex-au          — https://github.com/cchew/lex-au (MIT) — AKN 3.0 XML corpus
-Layer 2.5: lex-au-graph  — https://github.com/cchew/lex-au-graph (MIT) — cross-reference graph + definition resolution
-This repo               — thin FastAPI wrapper around lex-au-graph's DefinitionResolver
+Corpus:    lex-au        — https://github.com/cchew/lex-au (MIT) — AKN 3.0 XML corpus
+Retrieval: lex-au-graph  — https://github.com/cchew/lex-au-graph (MIT) — cross-reference graph + definition resolution
+This repo                — thin FastAPI wrapper around lex-au-graph's DefinitionResolver
 ```
 
 `lex-au-graph` is a direct runtime dependency (installed editable, not vendored) and
