@@ -15,6 +15,9 @@ dependencies = [
     "click>=8.1",
 ]
 
+[project.urls]
+Repository = "https://github.com/cchew/term-comparison"
+
 [project.scripts]
 term-comparison = "term_comparison.cli:cli"
 
