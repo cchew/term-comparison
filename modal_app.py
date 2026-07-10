@@ -20,7 +20,7 @@ app = modal.App("term-comparison", image=image)
 
 
 @app.function(min_containers=1, secrets=[modal.Secret.from_name("anthropic-api-key")])
-@modal.asgi_app()
+@modal.asgi_app(label="term-comparison-api")
 def fastapi_app():
     import os
     from pathlib import Path as _Path
