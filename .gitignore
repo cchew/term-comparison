@@ -7,3 +7,7 @@ __pycache__/
 
 # Local Netlify folder
 .netlify
+
+# Playwright artifacts
+web/test-results/
+web/playwright-report/

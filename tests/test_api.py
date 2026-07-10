@@ -133,3 +133,31 @@ def test_get_definitions_difference_summary_none_without_client():
     response = client.get("/definitions", params={"term": "income support payment"})
 
     assert response.json()["difference_summary"] is None
+
+
+def test_get_definitions_survives_unexpected_llm_exception():
+    """A summary-layer failure must never take down the whole /definitions response.
+
+    llm.py's summarise_differences only catches anthropic.APIError internally. This
+    test raises a bare ValueError from the mocked client — something llm.py does NOT
+    catch — to prove the defensive catch added at the API boundary (not inside
+    llm.py) actually works, rather than merely re-exercising llm.py's own handling.
+    """
+    resolver = _build_test_resolver()
+    mock_client = MagicMock()
+    mock_client.messages.create.side_effect = ValueError("unexpected failure, not an APIError")
+
+    app = create_app(resolver, client=mock_client)
+    client = TestClient(app)
+
+    response = client.get("/definitions", params={"term": "income support payment"})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["definitions"]) == 2
+    act_titles = {d["act_title"] for d in data["definitions"]}
+    assert act_titles == {
+        "Social Security Act 1991",
+        "Superannuation Industry (Supervision) Act 1993",
+    }
+    assert data["difference_summary"] is None

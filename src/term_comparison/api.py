@@ -35,9 +35,15 @@ def create_app(resolver: DefinitionResolver, client: anthropic.Anthropic | None 
             )
             for r in results
         ]
-        difference_summary = (
-            summarise_differences(term, definitions, client) if client is not None else None
-        )
+        difference_summary = None
+        if client is not None:
+            try:
+                difference_summary = summarise_differences(term, definitions, client)
+            except Exception:
+                # The LLM summary is an enhancement, not the product. A failure here
+                # (network error, SDK exception not subclassing anthropic.APIError,
+                # malformed response, etc.) must never break the core definitions result.
+                difference_summary = None
         return ComparisonResponse(
             term=term,
             definitions=definitions,
