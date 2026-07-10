@@ -1,4 +1,11 @@
 // tests/e2e.spec.ts
+//
+// Precondition: the FastAPI backend must be started manually before running this
+// suite — Playwright's `webServer` config (playwright.config.ts) only manages the
+// frontend dev server, not the backend. Start it in a separate terminal first:
+//   source .venv/bin/activate && export $(grep ANTHROPIC_API_KEY .env) && term-comparison serve
+// ANTHROPIC_API_KEY must be exported so the difference-summary test below gets a
+// real, non-null summary back from the LLM layer.
 import { test, expect } from "@playwright/test";
 
 test.describe("Term comparison — flagship terms", () => {
@@ -26,5 +33,13 @@ test.describe("Term comparison — flagship terms", () => {
     await page.locator(".search-input").fill("zzz-not-a-real-term");
     await page.locator(".search-btn").click();
     await expect(page.locator(".load-error")).toContainText("No Commonwealth Act defines");
+  });
+
+  test("clicking 'personal information' renders a non-empty difference summary", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: "personal information" }).click();
+    await page.waitForSelector(".difference-summary", { timeout: 20000 });
+    await expect(page.locator(".difference-summary")).toBeVisible();
+    await expect(page.locator(".difference-summary")).not.toHaveText("");
   });
 });
