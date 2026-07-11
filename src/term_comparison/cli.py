@@ -4,7 +4,26 @@ from pathlib import Path
 
 import click
 
-DEFAULT_GRAPH = Path(__file__).resolve().parents[4] / "lex-au-graph" / "repo" / "graph.json"
+def _default_graph() -> Path:
+    """Locate lex-au-graph's graph.json as a sibling checkout.
+
+    Tries the flat clone layout documented in the README first
+    (term-comparison/, lex-au-graph/ as plain siblings), then falls back
+    to a nested repo/ layout (e.g. projects/<name>/repo/) if that's what's
+    actually on disk. Returns the flat-layout path if neither exists yet,
+    so --help still shows a sensible default before graph.json is built.
+    """
+    here = Path(__file__).resolve()
+    flat = here.parents[3] / "lex-au-graph" / "graph.json"
+    nested = here.parents[4] / "lex-au-graph" / "repo" / "graph.json"
+    if flat.exists():
+        return flat
+    if nested.exists():
+        return nested
+    return flat
+
+
+DEFAULT_GRAPH = _default_graph()
 
 
 @click.group()
