@@ -12,7 +12,14 @@ class DefinitionOut(BaseModel):
     section_eid: str
 
 
+class DifferenceOut(BaseModel):
+    act_title: str
+    quote: str
+    note: str
+
+
 class ComparisonResponse(BaseModel):
     term: str
     definitions: list[DefinitionOut]
     difference_summary: str | None = None
+    differences: list[DifferenceOut] = []
