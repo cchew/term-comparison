@@ -8,7 +8,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from lexaugraph.resolver import DefinitionResolver
 
 from term_comparison.llm import summarise_differences
-from term_comparison.models import ComparisonResponse, DefinitionOut
+from term_comparison.models import (
+    ComparisonResponse,
+    DefinitionOut,
+    DifferenceOut,
+    MultiActTermOut,
+    StatsOut,
+)
 
 
 def create_app(resolver: DefinitionResolver, client: anthropic.Anthropic | None = None) -> FastAPI:
@@ -35,19 +41,39 @@ def create_app(resolver: DefinitionResolver, client: anthropic.Anthropic | None 
             )
             for r in results
         ]
-        difference_summary = None
+        diff_result = None
         if client is not None:
             try:
-                difference_summary = summarise_differences(term, definitions, client)
+                diff_result = summarise_differences(term, definitions, client)
             except Exception:
                 # The LLM summary is an enhancement, not the product. A failure here
                 # (network error, SDK exception not subclassing anthropic.APIError,
                 # malformed response, etc.) must never break the core definitions result.
-                difference_summary = None
+                diff_result = None
         return ComparisonResponse(
             term=term,
             definitions=definitions,
-            difference_summary=difference_summary,
+            difference_summary=diff_result.summary if diff_result else None,
+            differences=(
+                [DifferenceOut(act_title=d.act_title, quote=d.quote, note=d.note) for d in diff_result.differences]
+                if diff_result
+                else []
+            ),
         )
+
+    @app.get("/stats", response_model=StatsOut)
+    def get_stats() -> StatsOut:
+        return StatsOut(
+            acts=resolver.count_acts(),
+            defined_terms=resolver.count_valid_defined_terms(),
+            multi_act_terms=len(resolver.list_multi_act_terms(min_acts=3)),
+        )
+
+    @app.get("/terms", response_model=list[MultiActTermOut])
+    def get_terms(min_acts: int = 3) -> list[MultiActTermOut]:
+        return [
+            MultiActTermOut(term=t.term, display_term=t.display_term, act_count=t.act_count)
+            for t in resolver.list_multi_act_terms(min_acts=min_acts)
+        ]
 
     return app

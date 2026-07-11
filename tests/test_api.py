@@ -161,3 +161,85 @@ def test_get_definitions_survives_unexpected_llm_exception():
         "Superannuation Industry (Supervision) Act 1993",
     }
     assert data["difference_summary"] is None
+
+
+def test_get_definitions_populates_differences_with_client():
+    resolver = _build_test_resolver()
+    mock_response = MagicMock()
+    mock_response.content = [MagicMock(text=json.dumps({
+        "summary": "The Acts describe the same payment concept in different words.",
+        "differences": [
+            {
+                "act_title": "Social Security Act 1991",
+                "quote": "a social security benefit or a social security pension",
+                "note": "defines the concept directly",
+            },
+        ],
+        "confidence": "high",
+    }))]
+    mock_client = MagicMock()
+    mock_client.messages.create.return_value = mock_response
+
+    app = create_app(resolver, client=mock_client)
+    client = TestClient(app)
+
+    response = client.get("/definitions", params={"term": "income support payment"})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["differences"] == [
+        {
+            "act_title": "Social Security Act 1991",
+            "quote": "a social security benefit or a social security pension",
+            "note": "defines the concept directly",
+        }
+    ]
+
+
+def test_get_definitions_differences_empty_without_client():
+    resolver = _build_test_resolver()
+    app = create_app(resolver)
+    client = TestClient(app)
+
+    response = client.get("/definitions", params={"term": "income support payment"})
+
+    assert response.json()["differences"] == []
+
+
+def test_get_stats_returns_live_counts():
+    resolver = _build_test_resolver()
+    app = create_app(resolver)
+    client = TestClient(app)
+
+    response = client.get("/stats")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["acts"] == 2
+    assert data["defined_terms"] == 2
+    assert data["multi_act_terms"] == 0  # "income support payment" is defined in 2 Acts, below the min_acts=3 default
+
+
+def test_get_terms_returns_multi_act_terms_above_threshold():
+    resolver = _build_test_resolver()
+    app = create_app(resolver)
+    client = TestClient(app)
+
+    response = client.get("/terms", params={"min_acts": 2})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["term"] == "income support payment"
+    assert data[0]["act_count"] == 2
+
+
+def test_get_terms_default_min_acts_excludes_two_act_term():
+    resolver = _build_test_resolver()
+    app = create_app(resolver)
+    client = TestClient(app)
+
+    response = client.get("/terms")
+
+    assert response.status_code == 200
+    assert response.json() == []

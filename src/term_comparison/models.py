@@ -23,3 +23,15 @@ class ComparisonResponse(BaseModel):
     definitions: list[DefinitionOut]
     difference_summary: str | None = None
     differences: list[DifferenceOut] = []
+
+
+class StatsOut(BaseModel):
+    acts: int
+    defined_terms: int
+    multi_act_terms: int
+
+
+class MultiActTermOut(BaseModel):
+    term: str
+    display_term: str
+    act_count: int
