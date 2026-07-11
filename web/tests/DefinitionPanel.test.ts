@@ -2,7 +2,7 @@
 import { describe, it, expect } from "vitest";
 import { mount } from "@vue/test-utils";
 import DefinitionPanel from "../src/components/DefinitionPanel.vue";
-import type { DefinitionOut } from "../src/types";
+import type { DefinitionOut, DifferenceOut } from "../src/types";
 
 const DEFS: DefinitionOut[] = [
   {
@@ -36,5 +36,46 @@ describe("DefinitionPanel", () => {
   it("shows the definition text", () => {
     const wrapper = mount(DefinitionPanel, { props: { definitions: DEFS } });
     expect(wrapper.text()).toContain("information about an identified individual");
+  });
+
+  it("renders no <mark> elements when no differences are passed", () => {
+    const wrapper = mount(DefinitionPanel, { props: { definitions: DEFS } });
+    expect(wrapper.findAll("mark")).toHaveLength(0);
+  });
+
+  it("wraps a verified quote in <mark> for the matching card", () => {
+    const differences: DifferenceOut[] = [
+      {
+        act_title: "Privacy Act 1988",
+        quote: "information about an identified individual",
+        note: "narrower — excludes opinions",
+      },
+    ];
+    const wrapper = mount(DefinitionPanel, { props: { definitions: DEFS, differences } });
+    const marks = wrapper.findAll("mark");
+    expect(marks).toHaveLength(1);
+    expect(marks[0].text()).toBe("information about an identified individual");
+  });
+
+  it("leaves text unmarked when the quote does not match any card", () => {
+    const differences: DifferenceOut[] = [
+      { act_title: "Privacy Act 1988", quote: "this exact phrase does not appear anywhere", note: "fabricated" },
+    ];
+    const wrapper = mount(DefinitionPanel, { props: { definitions: DEFS, differences } });
+    expect(wrapper.findAll("mark")).toHaveLength(0);
+  });
+
+  it("only marks the card matching the difference's act_title", () => {
+    const differences: DifferenceOut[] = [
+      {
+        act_title: "Privacy Act 1988",
+        quote: "information about an identified individual",
+        note: "narrower",
+      },
+    ];
+    const wrapper = mount(DefinitionPanel, { props: { definitions: DEFS, differences } });
+    const cards = wrapper.findAll(".definition-card");
+    expect(cards[0].findAll("mark")).toHaveLength(1);
+    expect(cards[1].findAll("mark")).toHaveLength(0);
   });
 });
