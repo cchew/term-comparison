@@ -1,5 +1,6 @@
 # src/term_comparison/llm.py
 from __future__ import annotations
+from dataclasses import dataclass
 import json
 import os
 import re
@@ -7,6 +8,19 @@ import re
 import anthropic
 
 from term_comparison.models import DefinitionOut
+
+
+@dataclass
+class VerifiedDifference:
+    act_title: str
+    quote: str
+    note: str
+
+
+@dataclass
+class DifferenceSummary:
+    summary: str
+    differences: list[VerifiedDifference]  # only the ones that verified
 
 _SYSTEM_PROMPT = (
     "You are assisting a legislative research tool that compares how a legal term is "
@@ -72,13 +86,15 @@ def summarise_differences(
     term: str,
     definitions: list[DefinitionOut],
     client: anthropic.Anthropic,
-) -> str | None:
+) -> DifferenceSummary | None:
     """Return a plain-language, quote-verified summary of observable differences.
 
     Returns None if there's nothing to compare (fewer than 2 definitions), the LLM
     call fails, the response isn't valid JSON, or none of the claimed differences'
     quotes verify against their Act's definition text — never surface an unverified
-    claim to the user.
+    claim to the user. On success, `DifferenceSummary.differences` contains only the
+    claims that verified — an unverified claim is dropped from the list, not the
+    whole summary.
     """
     if len(definitions) < 2:
         return None
@@ -105,13 +121,22 @@ def summarise_differences(
     except json.JSONDecodeError:
         return None
 
-    verified = 0
+    verified: list[VerifiedDifference] = []
     for diff in data.get("differences", []):
         source = by_act.get(diff.get("act_title", ""))
-        if source and verify_quote(diff.get("quote", ""), source.definition_text):
-            verified += 1
+        quote = diff.get("quote", "")
+        if source and verify_quote(quote, source.definition_text):
+            verified.append(VerifiedDifference(
+                act_title=diff.get("act_title", ""),
+                quote=quote,
+                note=diff.get("note", ""),
+            ))
 
-    if verified == 0:
+    if not verified:
         return None
 
-    return data.get("summary")
+    summary = data.get("summary")
+    if not summary:
+        return None
+
+    return DifferenceSummary(summary=summary, differences=verified)

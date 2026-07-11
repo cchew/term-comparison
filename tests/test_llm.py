@@ -66,7 +66,12 @@ def test_summarise_differences_returns_summary_when_quotes_verify():
 
     result = summarise_differences("personal information", [DEF_A, DEF_B], mock_client)
 
-    assert result == "One Act limits personal information to information, the other extends it to information or an opinion."
+    assert result is not None
+    assert result.summary == "One Act limits personal information to information, the other extends it to information or an opinion."
+    assert len(result.differences) == 2
+    assert result.differences[0].act_title == "Privacy Act 1988"
+    assert result.differences[0].quote == "information about an identified individual"
+    assert result.differences[0].note == "narrower — excludes opinions"
 
 
 def test_summarise_differences_returns_none_when_no_quotes_verify():
@@ -112,4 +117,33 @@ def test_summarise_differences_strips_markdown_fences():
 
     result = summarise_differences("personal information", [DEF_A, DEF_B], mock_client)
 
-    assert result == "Difference described here."
+    assert result is not None
+    assert result.summary == "Difference described here."
+
+
+def test_summarise_differences_only_includes_verified_differences_in_list():
+    mock_response = MagicMock()
+    mock_response.content = [MagicMock(text=json.dumps({
+        "summary": "Mixed claim, only one differences entry actually verifies.",
+        "differences": [
+            {
+                "act_title": "Privacy Act 1988",
+                "quote": "information about an identified individual",
+                "note": "verifies",
+            },
+            {
+                "act_title": "My Health Records Act 2012",
+                "quote": "this exact phrase does not appear anywhere",
+                "note": "fabricated, does not verify",
+            },
+        ],
+        "confidence": "medium",
+    }))]
+    mock_client = MagicMock()
+    mock_client.messages.create.return_value = mock_response
+
+    result = summarise_differences("personal information", [DEF_A, DEF_B], mock_client)
+
+    assert result is not None
+    assert len(result.differences) == 1
+    assert result.differences[0].act_title == "Privacy Act 1988"
