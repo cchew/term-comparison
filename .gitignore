@@ -11,3 +11,6 @@ __pycache__/
 # Playwright artifacts
 web/test-results/
 web/playwright-report/
+
+# Isolated feature-branch workspaces
+.worktrees/
