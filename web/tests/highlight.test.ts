@@ -38,4 +38,16 @@ describe("findQuoteSpan", () => {
   it("returns null for an empty quote", () => {
     expect(findQuoteSpan("", SOURCE)).toBeNull();
   });
+
+  it("matches quote words separated only by punctuation/whitespace (structural gaps)", () => {
+    // The regex joiner [^A-Za-z0-9]+ can span punctuation-only runs, including
+    // structural markers like semicolons or brackets with no intervening words.
+    // This documents expected behavior: quotes ARE pre-verified server-side before
+    // reaching this function, so a match across "(a) (b)" or "; " is intentional.
+    const sourceWithStructure = "means: (a) section 5; or (b) section 10 applies.";
+    const quote = "5; or"; // words "5" and "or" separated by "; " (punctuation only)
+    const span = findQuoteSpan(quote, sourceWithStructure);
+    expect(span).not.toBeNull();
+    expect(sourceWithStructure.slice(span!.start, span!.end)).toBe("5; or");
+  });
 });

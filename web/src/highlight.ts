@@ -23,6 +23,7 @@ export function findQuoteSpan(quote: string, sourceText: string): { start: numbe
   const words = normaliseForMatch(quote).split(" ").filter(Boolean);
   if (words.length === 0) return null;
 
+  // The joiner [^A-Za-z0-9]+ matches any run of punctuation/whitespace (including newlines, no length bound), allowing matches across structural gaps (list markers, semicolons); it cannot skip real words. Quotes are pre-verified server-side before reaching this function.
   const pattern = words.map(escapeRegExp).join("[^A-Za-z0-9]+");
   const match = new RegExp(pattern, "i").exec(sourceText);
   if (!match) return null;
