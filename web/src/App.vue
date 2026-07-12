@@ -45,8 +45,8 @@ async function search(t: string) {
   <div class="app-shell">
     <header class="app-header">
       <div class="app-title">
-        <h1>Term Comparison — IM2026</h1>
-        <p class="subtitle">Does this legal term mean the same thing everywhere it's used?</p>
+        <h1>Act Alike — IM2026</h1>
+        <p class="subtitle">Term comparison across Commonwealth Acts — does this legal term mean the same thing everywhere it's used?</p>
       </div>
       <CorpusStats />
     </header>

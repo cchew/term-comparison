@@ -9,9 +9,9 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Term comparison — flagship terms", () => {
-  test("page title is Term Comparison", async ({ page }) => {
+  test("page title is Act Alike", async ({ page }) => {
     await page.goto("/");
-    await expect(page.locator("h1")).toContainText("Term Comparison");
+    await expect(page.locator("h1")).toContainText("Act Alike");
   });
 
   test("clicking 'personal information' shows definitions from multiple Acts", async ({ page }) => {
