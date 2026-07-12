@@ -46,10 +46,11 @@ async function search(t: string) {
     </header>
     <main>
       <form class="search-row" @submit.prevent="search(term)">
-        <input v-model="term" type="text" placeholder="e.g. personal information" class="search-input" />
+        <label for="term-search" class="visually-hidden">Search for a legal term</label>
+        <input id="term-search" v-model="term" type="text" placeholder="e.g. personal information" class="search-input" />
         <button type="submit" class="search-btn">Compare</button>
       </form>
-      <nav class="flagship-nav">
+      <nav class="flagship-nav" aria-label="Flagship term shortcuts">
         <button
           v-for="t in FLAGSHIP_TERMS"
           :key="t"
@@ -121,6 +122,16 @@ async function search(t: string) {
 .search-btn { background: var(--color-ink); border-color: var(--color-ink); color: var(--color-bg); }
 .search-btn:hover { opacity: 0.9; }
 .flagship-btn:hover { background: var(--color-surface-hover); border-color: var(--color-ink-3); }
+
+.search-btn:focus-visible, .flagship-btn:focus-visible {
+  outline: 2px solid var(--color-accent-border);
+  outline-offset: 2px;
+}
+
+.search-input:focus-visible {
+  outline: 2px solid var(--color-accent-border);
+  outline-offset: 2px;
+}
 
 .flagship-nav {
   display: flex;

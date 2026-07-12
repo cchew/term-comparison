@@ -84,6 +84,11 @@ function segmentsFor(d: DefinitionOut): Segment[] {
   text-decoration: underline;
 }
 
+.citation-link:focus-visible {
+  outline: 2px solid var(--color-accent-border);
+  outline-offset: 2px;
+}
+
 .definition-text {
   font-size: 0.8125rem;
   line-height: 1.6;

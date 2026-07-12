@@ -30,8 +30,10 @@ onMounted(async () => {
 </script>
 
 <template>
-  <section class="term-browser">
+  <section class="term-browser" aria-label="Browse defined terms">
+    <label for="term-filter" class="visually-hidden">Filter defined terms</label>
     <input
+      id="term-filter"
       v-model="filterText"
       type="text"
       placeholder="Filter defined terms..."
@@ -92,6 +94,11 @@ onMounted(async () => {
 .term-chip:hover {
   background: var(--color-surface-hover);
   border-color: var(--color-ink-3);
+}
+
+.term-chip:focus-visible, .term-filter-input:focus-visible {
+  outline: 2px solid var(--color-accent-border);
+  outline-offset: 2px;
 }
 
 .chip-count {
