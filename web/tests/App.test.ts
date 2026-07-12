@@ -104,6 +104,49 @@ describe("App", () => {
     expect(wrapper.findAll("mark")).toHaveLength(1);
   });
 
+  it("shows the term browser expanded by default", () => {
+    const wrapper = mount(App, { attachTo: document.body });
+    expect(wrapper.find("#term-browser-panel").isVisible()).toBe(true);
+    expect(wrapper.find(".term-browser-toggle").attributes("aria-expanded")).toBe("true");
+    wrapper.unmount();
+  });
+
+  it("auto-collapses the term browser after a successful search", async () => {
+    const wrapper = mount(App, { attachTo: document.body });
+    expect(wrapper.find("#term-browser-panel").isVisible()).toBe(true);
+
+    await wrapper.get(".flagship-btn").trigger("click");
+    await flushPromises();
+
+    expect(wrapper.find("#term-browser-panel").isVisible()).toBe(false);
+    expect(wrapper.find(".term-browser-toggle").attributes("aria-expanded")).toBe("false");
+    wrapper.unmount();
+  });
+
+  it("does not auto-collapse the term browser on a 404 (no result)", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 404, json: async () => ({}) })));
+    const wrapper = mount(App, { attachTo: document.body });
+    await wrapper.find(".search-input").setValue("not a real term");
+    await wrapper.find(".search-row").trigger("submit.prevent");
+    await flushPromises();
+
+    expect(wrapper.find("#term-browser-panel").isVisible()).toBe(true);
+    wrapper.unmount();
+  });
+
+  it("lets the toggle button re-expand the term browser after auto-collapse", async () => {
+    const wrapper = mount(App, { attachTo: document.body });
+    await wrapper.get(".flagship-btn").trigger("click");
+    await flushPromises();
+    expect(wrapper.find("#term-browser-panel").isVisible()).toBe(false);
+
+    await wrapper.get(".term-browser-toggle").trigger("click");
+
+    expect(wrapper.find("#term-browser-panel").isVisible()).toBe(true);
+    expect(wrapper.find(".term-browser-toggle").attributes("aria-expanded")).toBe("true");
+    wrapper.unmount();
+  });
+
   it("renders CorpusStats near the header", async () => {
     vi.stubGlobal("fetch", vi.fn(async (url: string) => {
       if (url.includes("/stats")) {

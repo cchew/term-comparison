@@ -12,6 +12,7 @@ const term = ref("");
 const result = ref<ComparisonResponse | null>(null);
 const loading = ref(false);
 const error = ref<string | null>(null);
+const browserExpanded = ref(true);
 
 async function search(t: string) {
   if (!t.trim()) return;
@@ -27,6 +28,7 @@ async function search(t: string) {
     }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     result.value = await res.json();
+    browserExpanded.value = false;
   } catch (e) {
     error.value = e instanceof Error ? e.message : "Search failed";
   } finally {
@@ -60,7 +62,18 @@ async function search(t: string) {
         >{{ t }}</button>
       </nav>
 
-      <TermBrowser @select="search" />
+      <div class="term-browser-section">
+        <button
+          type="button"
+          class="term-browser-toggle"
+          :aria-expanded="browserExpanded"
+          aria-controls="term-browser-panel"
+          @click="browserExpanded = !browserExpanded"
+        >{{ browserExpanded ? 'Hide' : 'Browse' }} defined terms</button>
+        <div id="term-browser-panel" v-show="browserExpanded">
+          <TermBrowser @select="search" />
+        </div>
+      </div>
 
       <p v-if="loading" class="loading">Searching...</p>
       <p v-else-if="error" class="load-error">{{ error }}</p>
@@ -137,6 +150,34 @@ async function search(t: string) {
   display: flex;
   gap: var(--s-1);
   margin-bottom: var(--s-5);
+}
+
+.term-browser-section {
+  margin-bottom: var(--s-5);
+}
+
+.term-browser-toggle {
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: var(--s-1) var(--s-2);
+  margin-bottom: var(--s-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-ink-2);
+  cursor: pointer;
+  transition: all 0.12s var(--ease-spring);
+}
+
+.term-browser-toggle:hover {
+  background: var(--color-surface-hover);
+  border-color: var(--color-ink-3);
+}
+
+.term-browser-toggle:focus-visible {
+  outline: 2px solid var(--color-accent-border);
+  outline-offset: 2px;
 }
 
 .difference-summary {
