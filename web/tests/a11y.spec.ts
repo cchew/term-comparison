@@ -17,7 +17,7 @@ test.describe("Accessibility", () => {
 
   test("results state (after a flagship search) has no serious or critical axe violations", async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("button", { name: "personal information" }).click();
+    await page.locator(".flagship-btn", { hasText: "personal information" }).click();
     await page.waitForSelector(".definition-card", { timeout: 10000 });
     const results = await new AxeBuilder({ page }).analyze();
     const seriousOrCritical = results.violations.filter(
