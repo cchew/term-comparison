@@ -20,6 +20,7 @@ describe("App", () => {
   beforeEach(() => {
     vi.stubGlobal("fetch", vi.fn(async (url: string) => {
       if (url.includes("/terms")) return { ok: true, status: 200, json: async () => [] };
+      if (url.includes("/stats")) return { ok: true, status: 200, json: async () => ({ acts: 0, defined_terms: 0, multi_act_terms: 0 }) };
       return { ok: true, status: 200, json: async () => RESPONSE };
     }));
   });
@@ -101,5 +102,18 @@ describe("App", () => {
     await wrapper.get(".flagship-btn").trigger("click");
     await flushPromises();
     expect(wrapper.findAll("mark")).toHaveLength(1);
+  });
+
+  it("renders CorpusStats near the header", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      if (url.includes("/stats")) {
+        return { ok: true, status: 200, json: async () => ({ acts: 24, defined_terms: 1893, multi_act_terms: 105 }) };
+      }
+      if (url.includes("/terms")) return { ok: true, status: 200, json: async () => [] };
+      return { ok: true, status: 200, json: async () => RESPONSE };
+    }));
+    const wrapper = mount(App);
+    await flushPromises();
+    expect(wrapper.find(".corpus-stats").exists()).toBe(true);
   });
 });

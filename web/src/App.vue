@@ -3,6 +3,7 @@ import { ref } from "vue";
 import type { ComparisonResponse } from "./types";
 import DefinitionPanel from "./components/DefinitionPanel.vue";
 import TermBrowser from "./components/TermBrowser.vue";
+import CorpusStats from "./components/CorpusStats.vue";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) ?? "http://127.0.0.1:8000";
 const FLAGSHIP_TERMS = ["personal information", "australian resident"];
@@ -41,6 +42,7 @@ async function search(t: string) {
         <h1>Term Comparison — IM2026</h1>
         <p class="subtitle">Does this legal term mean the same thing everywhere it's used?</p>
       </div>
+      <CorpusStats />
     </header>
     <main>
       <form class="search-row" @submit.prevent="search(term)">
