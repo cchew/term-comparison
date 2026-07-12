@@ -13,6 +13,7 @@ const result = ref<ComparisonResponse | null>(null);
 const loading = ref(false);
 const error = ref<string | null>(null);
 const browserExpanded = ref(true);
+const hasAutoCollapsedOnce = ref(false);
 
 async function search(t: string) {
   if (!t.trim()) return;
@@ -28,7 +29,10 @@ async function search(t: string) {
     }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     result.value = await res.json();
-    browserExpanded.value = false;
+    if (!hasAutoCollapsedOnce.value) {
+      browserExpanded.value = false;
+      hasAutoCollapsedOnce.value = true;
+    }
   } catch (e) {
     error.value = e instanceof Error ? e.message : "Search failed";
   } finally {

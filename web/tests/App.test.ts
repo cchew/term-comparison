@@ -147,6 +147,27 @@ describe("App", () => {
     wrapper.unmount();
   });
 
+  it("respects a manual re-expand across a second successful search (does not re-collapse)", async () => {
+    const wrapper = mount(App, { attachTo: document.body });
+
+    // First search: auto-collapse fires as intended.
+    await wrapper.get(".flagship-btn:nth-of-type(1)").trigger("click");
+    await flushPromises();
+    expect(wrapper.find("#term-browser-panel").isVisible()).toBe(false);
+
+    // User manually re-expands to browse for a different term.
+    await wrapper.get(".term-browser-toggle").trigger("click");
+    expect(wrapper.find("#term-browser-panel").isVisible()).toBe(true);
+
+    // Second successful search (different term) must not override the user's choice.
+    await wrapper.get(".flagship-btn:nth-of-type(2)").trigger("click");
+    await flushPromises();
+
+    expect(wrapper.find("#term-browser-panel").isVisible()).toBe(true);
+    expect(wrapper.find(".term-browser-toggle").attributes("aria-expanded")).toBe("true");
+    wrapper.unmount();
+  });
+
   it("renders CorpusStats near the header", async () => {
     vi.stubGlobal("fetch", vi.fn(async (url: string) => {
       if (url.includes("/stats")) {
