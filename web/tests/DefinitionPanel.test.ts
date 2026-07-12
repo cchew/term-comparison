@@ -86,4 +86,33 @@ describe("DefinitionPanel", () => {
     expect(links[0]!.attributes("href")).toContain("legislation.gov.au");
     expect(links[0]!.attributes("href")).toContain(encodeURIComponent("Privacy Act 1988"));
   });
+
+  it("gives a cross-reference card the cross-reference treatment", () => {
+    const defs: DefinitionOut[] = [
+      {
+        display_term: "personal information",
+        definition_text: "in the Privacy Act 1988.",
+        act_title: "Corporations Act 2001",
+        act_frbr_uri: "/akn/au/act/2001/50",
+        section_eid: "sec-9",
+      },
+    ];
+    const wrapper = mount(DefinitionPanel, { props: { definitions: defs } });
+    const card = wrapper.find(".definition-card");
+    expect(card.classes()).toContain("cross-reference-card");
+    const note = wrapper.find(".cross-ref-note");
+    expect(note.exists()).toBe(true);
+    expect(note.text()).toContain("Privacy Act 1988");
+    // De-emphasized raw text is still present, just not run through the highlight path.
+    expect(wrapper.text()).toContain("in the Privacy Act 1988.");
+  });
+
+  it("does not give a normal card the cross-reference treatment", () => {
+    const wrapper = mount(DefinitionPanel, { props: { definitions: DEFS } });
+    const cards = wrapper.findAll(".definition-card");
+    for (const card of cards) {
+      expect(card.classes()).not.toContain("cross-reference-card");
+    }
+    expect(wrapper.find(".cross-ref-note").exists()).toBe(false);
+  });
 });

@@ -3,6 +3,7 @@ import type { DefinitionOut, DifferenceOut } from "../types";
 import { findQuoteSpan } from "../highlight";
 import { legislationSearchUrl } from "../citation";
 import { formatSectionCitation } from "../citation-format";
+import { detectCrossReference } from "../crossref";
 
 const props = withDefaults(
   defineProps<{ definitions: DefinitionOut[]; differences?: DifferenceOut[] }>(),
@@ -29,11 +30,20 @@ function segmentsFor(d: DefinitionOut): Segment[] {
   }
   return segments;
 }
+
+function crossReferenceFor(d: DefinitionOut): string | null {
+  return detectCrossReference(d.definition_text, d.act_title);
+}
 </script>
 
 <template>
   <div class="definition-panel">
-    <article v-for="d in definitions" :key="d.act_frbr_uri + d.section_eid" class="definition-card">
+    <article
+      v-for="d in definitions"
+      :key="d.act_frbr_uri + d.section_eid"
+      class="definition-card"
+      :class="{ 'cross-reference-card': crossReferenceFor(d) }"
+    >
       <div class="source-chip mono">{{ d.act_title }} · {{ formatSectionCitation(d.section_eid) }}</div>
       <a
         class="citation-link"
@@ -41,7 +51,11 @@ function segmentsFor(d: DefinitionOut): Segment[] {
         target="_blank"
         rel="noopener noreferrer"
       >View on legislation.gov.au</a>
-      <p class="definition-text">
+      <template v-if="crossReferenceFor(d)">
+        <p class="cross-ref-note">Adopts the definition from {{ crossReferenceFor(d) }}</p>
+        <p class="definition-text cross-ref-text">{{ d.definition_text }}</p>
+      </template>
+      <p v-else class="definition-text">
         <span v-for="(seg, i) in segmentsFor(d)" :key="i" style="display: contents">
           <mark v-if="seg.marked">{{ seg.text }}</mark>
           <template v-else>{{ seg.text }}</template>
@@ -102,5 +116,23 @@ function segmentsFor(d: DefinitionOut): Segment[] {
   border-radius: 3px;
   padding: 0 2px;
   color: inherit;
+}
+
+.cross-reference-card {
+  background: var(--color-surface-raised);
+  border-style: dashed;
+}
+
+.cross-ref-note {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-ink);
+  margin-bottom: var(--s-2);
+}
+
+.cross-ref-text {
+  font-size: 0.75rem;
+  font-style: italic;
+  color: var(--color-ink-3);
 }
 </style>
