@@ -12,7 +12,16 @@
 // "(Family" token) followed by whitespace, ending in "Act" + a 4-digit year.
 const ACT_NAME_PATTERN = /((?:[A-Z0-9(][\w'()-]*\s+){1,8}Act\s+\d{4})/;
 
+// The regex has no positional anchor, so it also matches a genuine, longer
+// definition that happens to cite another Act mid-sentence (e.g. "an offence
+// under section 5 of the Crimes Act 1914"). Every confirmed real cross-reference
+// in the live corpus is <=71 chars; the shortest confirmed genuine definition
+// is 106 chars. 100 sits between the two with headroom on both sides.
+const MAX_CROSS_REFERENCE_LENGTH = 100;
+
 export function detectCrossReference(definitionText: string, ownActTitle: string): string | null {
+  if (definitionText.length > MAX_CROSS_REFERENCE_LENGTH) return null;
+
   const match = ACT_NAME_PATTERN.exec(definitionText);
   if (!match) return null;
 

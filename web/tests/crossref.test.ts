@@ -62,4 +62,15 @@ describe("detectCrossReference", () => {
       "information or an opinion about an identified individual, or an individual who is reasonably identifiable:";
     expect(detectCrossReference(text, "Privacy Act 1988")).toBeNull();
   });
+
+  it("returns null for a long genuine definition that happens to cite another Act mid-sentence", () => {
+    // The regex has no positional anchor and would otherwise match this — the
+    // length guard is what correctly rules it out as a real definition, not a
+    // cross-reference. This is deliberately longer than any confirmed real
+    // cross-reference (<=71 chars) and close to the shortest confirmed
+    // genuine definition (106 chars).
+    const text =
+      "a person who commits an offence against section 5 of the Crimes Act 1914 in relation to Commonwealth property, however the offence is described";
+    expect(detectCrossReference(text, "Some Other Act 2000")).toBeNull();
+  });
 });
