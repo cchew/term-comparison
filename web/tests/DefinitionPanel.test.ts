@@ -105,6 +105,9 @@ describe("DefinitionPanel", () => {
     expect(note.text()).toContain("Privacy Act 1988");
     // De-emphasized raw text is still present, just not run through the highlight path.
     expect(wrapper.text()).toContain("in the Privacy Act 1988.");
+    // The source-chip (Act title + formatted citation) sits above the cross-reference
+    // branch, so it must still render normally on a cross-reference card.
+    expect(card.text()).toContain("s 9");
   });
 
   it("does not give a normal card the cross-reference treatment", () => {
