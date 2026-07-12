@@ -83,7 +83,7 @@ describe("DefinitionPanel", () => {
     const wrapper = mount(DefinitionPanel, { props: { definitions: DEFS } });
     const links = wrapper.findAll(".citation-link");
     expect(links).toHaveLength(2);
-    expect(links[0].attributes("href")).toContain("legislation.gov.au");
-    expect(links[0].attributes("href")).toContain(encodeURIComponent("Privacy Act 1988"));
+    expect(links[0]!.attributes("href")).toContain("legislation.gov.au");
+    expect(links[0]!.attributes("href")).toContain(encodeURIComponent("Privacy Act 1988"));
   });
 });
