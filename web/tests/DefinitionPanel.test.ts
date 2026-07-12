@@ -78,4 +78,12 @@ describe("DefinitionPanel", () => {
     expect(cards[0]!.findAll("mark")).toHaveLength(1);
     expect(cards[1]!.findAll("mark")).toHaveLength(0);
   });
+
+  it("renders a citation link per card pointing at legislation.gov.au", () => {
+    const wrapper = mount(DefinitionPanel, { props: { definitions: DEFS } });
+    const links = wrapper.findAll(".citation-link");
+    expect(links).toHaveLength(2);
+    expect(links[0].attributes("href")).toContain("legislation.gov.au");
+    expect(links[0].attributes("href")).toContain(encodeURIComponent("Privacy Act 1988"));
+  });
 });

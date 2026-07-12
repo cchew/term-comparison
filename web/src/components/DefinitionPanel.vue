@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { DefinitionOut, DifferenceOut } from "../types";
 import { findQuoteSpan } from "../highlight";
+import { legislationSearchUrl } from "../citation";
 
 const props = withDefaults(
   defineProps<{ definitions: DefinitionOut[]; differences?: DifferenceOut[] }>(),
@@ -33,6 +34,12 @@ function segmentsFor(d: DefinitionOut): Segment[] {
   <div class="definition-panel">
     <article v-for="d in definitions" :key="d.act_frbr_uri + d.section_eid" class="definition-card">
       <div class="source-chip mono">{{ d.act_title }} · {{ d.section_eid }}</div>
+      <a
+        class="citation-link"
+        :href="legislationSearchUrl(d.act_title)"
+        target="_blank"
+        rel="noopener noreferrer"
+      >View on legislation.gov.au</a>
       <p class="definition-text">
         <span v-for="(seg, i) in segmentsFor(d)" :key="i" style="display: contents">
           <mark v-if="seg.marked">{{ seg.text }}</mark>
@@ -67,6 +74,14 @@ function segmentsFor(d: DefinitionOut): Segment[] {
   border-radius: var(--radius-sm);
   font-size: 0.6875rem;
   margin-bottom: var(--s-2);
+}
+
+.citation-link {
+  display: inline-block;
+  font-size: 0.6875rem;
+  color: var(--color-ink-3);
+  margin-bottom: var(--s-2);
+  text-decoration: underline;
 }
 
 .definition-text {
