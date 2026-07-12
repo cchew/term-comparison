@@ -46,7 +46,7 @@ describe("TermBrowser", () => {
   it("emits select with the display_term when a chip is clicked", async () => {
     const wrapper = mount(TermBrowser);
     await flushPromises();
-    await wrapper.findAll(".term-chip")[0].trigger("click");
+    await wrapper.findAll(".term-chip")[0]!.trigger("click");
     expect(wrapper.emitted("select")).toBeTruthy();
     expect(wrapper.emitted("select")![0]).toEqual(["personal information"]);
   });

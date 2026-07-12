@@ -54,7 +54,7 @@ describe("DefinitionPanel", () => {
     const wrapper = mount(DefinitionPanel, { props: { definitions: DEFS, differences } });
     const marks = wrapper.findAll("mark");
     expect(marks).toHaveLength(1);
-    expect(marks[0].text()).toBe("information about an identified individual");
+    expect(marks[0]!.text()).toBe("information about an identified individual");
   });
 
   it("leaves text unmarked when the quote does not match any card", () => {
@@ -75,7 +75,7 @@ describe("DefinitionPanel", () => {
     ];
     const wrapper = mount(DefinitionPanel, { props: { definitions: DEFS, differences } });
     const cards = wrapper.findAll(".definition-card");
-    expect(cards[0].findAll("mark")).toHaveLength(1);
-    expect(cards[1].findAll("mark")).toHaveLength(0);
+    expect(cards[0]!.findAll("mark")).toHaveLength(1);
+    expect(cards[1]!.findAll("mark")).toHaveLength(0);
   });
 });
