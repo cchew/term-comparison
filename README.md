@@ -1,6 +1,6 @@
-# Term Comparison
+# Act Alike
 
-Innovation Month 2026 "Build a Bureaucrat Bot" entry. 
+Innovation Month 2026 "Build a Bureaucrat Bot" entry (repo name `term-comparison`, deployed as "Act Alike"). 
 
 Shows how ordinary legal terms (e.g. "personal information", "australian resident") are defined across Commonwealth Acts, with citations.
 
@@ -44,14 +44,14 @@ Most Acts that use "personal information" defer to the Privacy Act 1988's defini
 Clone this repo and lex-au-graph as siblings:
 
 ```bash
-git clone https://github.com/cchew/term-comparison.git
+git clone https://github.com/cchew/act-alike.git
 git clone https://github.com/cchew/lex-au-graph.git
 ```
 
 Install both:
 
 ```bash
-cd term-comparison
+cd act-alike
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 pip install -e ../lex-au-graph
@@ -79,6 +79,10 @@ term-comparison serve
 ## Known limits
 
 - A term returns `404 Not Found` if lex-au's extraction missed its definition upstream, not just if the term genuinely isn't defined anywhere. lex-au currently misses an estimated 46% of dictionary-style definitions where the defined term itself is bold/italic-formatted in the source DOCX - see [lex-au-graph's Known limits](https://github.com/cchew/lex-au-graph#known-limits-v072). A "no results" response does not mean the term is undefined in AU legislation, only that it isn't tagged in the corpus yet.
+
+## Versions
+
+- **v0.1.0** - First tagged release. Renamed "Act Alike". Corpus stats bar, defined-term browse list, quote-verified highlighting, legislation.gov.au citations, cross-reference card labeling, human-readable section citations, real axe-core accessibility scan + WCAG contrast fix, mobile viewport check.
 
 ## License
 
