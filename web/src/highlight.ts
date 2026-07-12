@@ -10,7 +10,7 @@
 export function normaliseForMatch(text: string): string {
   return text
     .toLowerCase()
-    .replace(/[^\w\s]/g, " ")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -23,9 +23,9 @@ export function findQuoteSpan(quote: string, sourceText: string): { start: numbe
   const words = normaliseForMatch(quote).split(" ").filter(Boolean);
   if (words.length === 0) return null;
 
-  // The joiner [^A-Za-z0-9]+ matches any run of punctuation/whitespace (including newlines, no length bound), allowing matches across structural gaps (list markers, semicolons); it cannot skip real words. Quotes are pre-verified server-side before reaching this function.
-  const pattern = words.map(escapeRegExp).join("[^A-Za-z0-9]+");
-  const match = new RegExp(pattern, "i").exec(sourceText);
+  // The joiner [^\p{L}\p{N}]+ matches any run of punctuation/whitespace (including newlines, no length bound), allowing matches across structural gaps (list markers, semicolons); it cannot skip real words. Quotes are pre-verified server-side before reaching this function. Unicode-aware to handle accented letters and non-ASCII digits (e.g. "café").
+  const pattern = words.map(escapeRegExp).join("[^\\p{L}\\p{N}]+");
+  const match = new RegExp(pattern, "iu").exec(sourceText);
   if (!match) return null;
 
   return { start: match.index, end: match.index + match[0].length };

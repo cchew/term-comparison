@@ -40,7 +40,7 @@ describe("findQuoteSpan", () => {
   });
 
   it("matches quote words separated only by punctuation/whitespace (structural gaps)", () => {
-    // The regex joiner [^A-Za-z0-9]+ can span punctuation-only runs, including
+    // The regex joiner [^\p{L}\p{N}]+ can span punctuation-only runs, including
     // structural markers like semicolons or brackets with no intervening words.
     // This documents expected behavior: quotes ARE pre-verified server-side before
     // reaching this function, so a match across "(a) (b)" or "; " is intentional.
@@ -49,5 +49,15 @@ describe("findQuoteSpan", () => {
     const span = findQuoteSpan(quote, sourceWithStructure);
     expect(span).not.toBeNull();
     expect(sourceWithStructure.slice(span!.start, span!.end)).toBe("5; or");
+  });
+
+  it("matches quotes containing non-ASCII word characters (accented letters)", () => {
+    // Unicode-aware pattern [^\p{L}\p{N}]+ should correctly identify word boundaries
+    // for accented characters. This quote contains "café" which has an accented 'é'.
+    const sourceWithAccents = "The café serves preference-related discussions about beverages.";
+    const quote = "café serves"; // "café" contains non-ASCII letter é
+    const span = findQuoteSpan(quote, sourceWithAccents);
+    expect(span).not.toBeNull();
+    expect(sourceWithAccents.slice(span!.start, span!.end).toLowerCase()).toContain("café serves");
   });
 });
