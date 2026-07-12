@@ -2,6 +2,7 @@
 import { ref } from "vue";
 import type { ComparisonResponse } from "./types";
 import DefinitionPanel from "./components/DefinitionPanel.vue";
+import TermBrowser from "./components/TermBrowser.vue";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) ?? "http://127.0.0.1:8000";
 const FLAGSHIP_TERMS = ["personal information", "australian resident"];
@@ -56,12 +57,14 @@ async function search(t: string) {
         >{{ t }}</button>
       </nav>
 
+      <TermBrowser @select="search" />
+
       <p v-if="loading" class="loading">Searching...</p>
       <p v-else-if="error" class="load-error">{{ error }}</p>
 
       <template v-else-if="result">
         <p v-if="result.difference_summary" class="difference-summary">{{ result.difference_summary }}</p>
-        <DefinitionPanel :definitions="result.definitions" />
+        <DefinitionPanel :definitions="result.definitions" :differences="result.differences" />
       </template>
     </main>
   </div>

@@ -18,11 +18,10 @@ const RESPONSE = {
 
 describe("App", () => {
   beforeEach(() => {
-    vi.stubGlobal("fetch", vi.fn(async () => ({
-      ok: true,
-      status: 200,
-      json: async () => RESPONSE,
-    })));
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      if (url.includes("/terms")) return { ok: true, status: 200, json: async () => [] };
+      return { ok: true, status: 200, json: async () => RESPONSE };
+    }));
   });
 
   it("renders the flagship term quick-select buttons", () => {
@@ -57,5 +56,50 @@ describe("App", () => {
     await wrapper.get(".flagship-btn").trigger("click");
     await flushPromises();
     expect(wrapper.text()).toContain("The Acts differ in scope.");
+  });
+
+  it("renders the term browser and searching a browsed term reuses the same search flow", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      if (url.includes("/terms")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => [{ term: "income support payment", display_term: "income support payment", act_count: 3 }],
+        };
+      }
+      return { ok: true, status: 200, json: async () => RESPONSE };
+    }));
+    const wrapper = mount(App);
+    await flushPromises();
+    expect(wrapper.text()).toContain("income support payment");
+
+    await wrapper.get(".term-chip").trigger("click");
+    await flushPromises();
+
+    expect(wrapper.text()).toContain("Privacy Act 1988");
+  });
+
+  it("passes the differences from the response through to DefinitionPanel", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      if (url.includes("/terms")) return { ok: true, status: 200, json: async () => [] };
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          ...RESPONSE,
+          differences: [
+            {
+              act_title: "Privacy Act 1988",
+              quote: "information about an identified individual",
+              note: "narrower",
+            },
+          ],
+        }),
+      };
+    }));
+    const wrapper = mount(App);
+    await wrapper.get(".flagship-btn").trigger("click");
+    await flushPromises();
+    expect(wrapper.findAll("mark")).toHaveLength(1);
   });
 });
