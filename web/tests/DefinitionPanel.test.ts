@@ -30,7 +30,7 @@ describe("DefinitionPanel", () => {
   it("shows the Act title and section citation in the chip", () => {
     const wrapper = mount(DefinitionPanel, { props: { definitions: DEFS } });
     expect(wrapper.text()).toContain("Privacy Act 1988");
-    expect(wrapper.text()).toContain("sec-6");
+    expect(wrapper.text()).toContain("s 6");
   });
 
   it("shows the definition text", () => {

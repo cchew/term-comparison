@@ -2,6 +2,7 @@
 import type { DefinitionOut, DifferenceOut } from "../types";
 import { findQuoteSpan } from "../highlight";
 import { legislationSearchUrl } from "../citation";
+import { formatSectionCitation } from "../citation-format";
 
 const props = withDefaults(
   defineProps<{ definitions: DefinitionOut[]; differences?: DifferenceOut[] }>(),
@@ -33,7 +34,7 @@ function segmentsFor(d: DefinitionOut): Segment[] {
 <template>
   <div class="definition-panel">
     <article v-for="d in definitions" :key="d.act_frbr_uri + d.section_eid" class="definition-card">
-      <div class="source-chip mono">{{ d.act_title }} · {{ d.section_eid }}</div>
+      <div class="source-chip mono">{{ d.act_title }} · {{ formatSectionCitation(d.section_eid) }}</div>
       <a
         class="citation-link"
         :href="legislationSearchUrl(d.act_title)"
