@@ -53,6 +53,9 @@ test.describe("Term comparison — browse list", () => {
   test("filtering and clicking a non-flagship term renders its definitions", async ({ page }) => {
     test.setTimeout(60000);
     await page.goto("/");
+    // The browse panel is collapsed by default — chips exist in the DOM but
+    // are display:none until the toggle is clicked.
+    await page.click(".term-browser-toggle");
     await page.waitForSelector(".term-chip", { timeout: 10000 });
 
     const chipCountBefore = await page.locator(".term-chip").count();

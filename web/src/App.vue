@@ -46,35 +46,37 @@ async function search(t: string) {
       <CorpusStats />
     </header>
     <div class="main-layout">
-      <main class="search-block">
-        <p class="search-instructions">Type a legal term, pick a shortcut below, or browse all defined terms in the panel.</p>
-        <form class="search-row" @submit.prevent="search(term)">
-          <label for="term-search" class="visually-hidden">Search for a legal term</label>
-          <input id="term-search" v-model="term" type="text" placeholder="e.g. personal information" class="search-input" />
-          <button type="submit" class="search-btn">Compare</button>
-        </form>
-        <nav class="flagship-nav" aria-label="Flagship term shortcuts">
-          <button
-            v-for="t in FLAGSHIP_TERMS"
-            :key="t"
-            type="button"
-            class="flagship-btn"
-            @click="search(t)"
-          >{{ t }}</button>
-        </nav>
-      </main>
+      <div class="content-col">
+        <main class="search-block">
+          <p class="search-instructions">Type a legal term, pick a shortcut below, or browse all defined terms in the panel.</p>
+          <form class="search-row" @submit.prevent="search(term)">
+            <label for="term-search" class="visually-hidden">Search for a legal term</label>
+            <input id="term-search" v-model="term" type="text" placeholder="e.g. personal information" class="search-input" />
+            <button type="submit" class="search-btn">Compare</button>
+          </form>
+          <nav class="flagship-nav" aria-label="Flagship term shortcuts">
+            <button
+              v-for="t in FLAGSHIP_TERMS"
+              :key="t"
+              type="button"
+              class="flagship-btn"
+              @click="search(t)"
+            >{{ t }}</button>
+          </nav>
+        </main>
 
-      <div class="results-block">
-        <p v-if="loading" class="loading">Searching...</p>
-        <p v-else-if="error" class="load-error">{{ error }}</p>
+        <div class="results-block">
+          <p v-if="loading" class="loading">Searching...</p>
+          <p v-else-if="error" class="load-error">{{ error }}</p>
 
-        <template v-else-if="result">
-          <p v-if="result.difference_summary" class="difference-summary">{{ result.difference_summary }}</p>
-          <p v-else-if="result.definitions.length >= 2" class="difference-summary difference-summary-empty">
-            No verified summary available for this term — the definitions below weren't reconciled into a narrative this time.
-          </p>
-          <DefinitionPanel :definitions="result.definitions" :differences="result.differences" />
-        </template>
+          <template v-else-if="result">
+            <p v-if="result.difference_summary" class="difference-summary">{{ result.difference_summary }}</p>
+            <p v-else-if="result.definitions.length >= 2" class="difference-summary difference-summary-empty">
+              No verified summary available for this term — the definitions below weren't reconciled into a narrative this time.
+            </p>
+            <DefinitionPanel :definitions="result.definitions" :differences="result.differences" />
+          </template>
+        </div>
       </div>
 
       <aside class="browser-aside" aria-label="Browse defined terms">
@@ -95,7 +97,6 @@ async function search(t: string) {
 
 <style scoped>
 .app-shell {
-  max-width: calc(var(--reading-width) + 300px);
   margin: 0 auto;
   padding: var(--s-6) var(--s-5);
 }
@@ -107,17 +108,9 @@ async function search(t: string) {
   gap: var(--s-5);
 }
 
+.content-col { display: contents; }
 .search-block { grid-area: search; }
 .results-block { grid-area: results; }
-
-@media (min-width: 860px) {
-  .main-layout {
-    grid-template-areas: "search browser" "results browser";
-    grid-template-columns: minmax(0, var(--reading-width)) 260px;
-    column-gap: var(--s-6);
-    row-gap: var(--s-5);
-  }
-}
 
 .app-header {
   margin-bottom: var(--s-5);
@@ -180,14 +173,31 @@ async function search(t: string) {
 
 .flagship-nav {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--s-1);
-  margin-bottom: var(--s-5);
 }
 
 .browser-aside {
   grid-area: browser;
   position: sticky;
   top: var(--s-5);
+}
+
+@media (min-width: 860px) {
+  .main-layout {
+    grid-template-areas: "content aside";
+    grid-template-columns: minmax(0, var(--reading-width)) minmax(260px, 1fr);
+    column-gap: var(--s-6);
+  }
+
+  .content-col {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-5);
+    grid-area: content;
+  }
+
+  .browser-aside { grid-area: aside; }
 }
 
 .term-browser-toggle {

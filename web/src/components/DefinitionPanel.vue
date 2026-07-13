@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import type { DefinitionOut, DifferenceOut } from "../types";
 import { findQuoteSpan } from "../highlight";
 import { legislationSearchUrl } from "../citation";
@@ -9,6 +10,33 @@ const props = withDefaults(
   defineProps<{ definitions: DefinitionOut[]; differences?: DifferenceOut[] }>(),
   { differences: () => [] }
 );
+
+// Groups cards by the Act they're actually about: a cross-reference card's
+// group key is the Act it adopts from, not its own home Act, so it clusters
+// next to that Act's own (authority) card instead of sitting wherever it
+// happened to fall in API order. Groups keep the order they first appear in;
+// within a group the authority card (if present) sorts before its adopters.
+const groupedDefinitions = computed(() => {
+  const groupKey = (d: DefinitionOut) => detectCrossReference(d.definition_text, d.act_title) ?? d.act_title;
+
+  const firstSeenAt = new Map<string, number>();
+  props.definitions.forEach((d, i) => {
+    const key = groupKey(d);
+    if (!firstSeenAt.has(key)) firstSeenAt.set(key, i);
+  });
+
+  return props.definitions
+    .map((d, originalIndex) => ({ d, originalIndex }))
+    .sort((a, b) => {
+      const groupOrder = firstSeenAt.get(groupKey(a.d))! - firstSeenAt.get(groupKey(b.d))!;
+      if (groupOrder !== 0) return groupOrder;
+      const aIsCrossRef = detectCrossReference(a.d.definition_text, a.d.act_title) !== null;
+      const bIsCrossRef = detectCrossReference(b.d.definition_text, b.d.act_title) !== null;
+      if (aIsCrossRef !== bIsCrossRef) return aIsCrossRef ? 1 : -1;
+      return a.originalIndex - b.originalIndex;
+    })
+    .map(({ d }) => d);
+});
 
 interface Segment {
   text: string;
@@ -45,7 +73,7 @@ function crossReferenceDetailFor(d: DefinitionOut): string | null {
 <template>
   <div class="definition-panel">
     <article
-      v-for="d in definitions"
+      v-for="d in groupedDefinitions"
       :key="d.act_frbr_uri + d.section_eid"
       class="definition-card"
       :class="{ 'cross-reference-card': crossReferenceFor(d) }"
