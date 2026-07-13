@@ -63,6 +63,27 @@ describe("detectCrossReference", () => {
     expect(detectCrossReference(text, "Privacy Act 1988")).toBeNull();
   });
 
+  it("detects a cross-reference to an Act name with a lowercase connector mid-name", () => {
+    // Regression test for the 2026-07-13 UX review finding: a lowercase
+    // connector word inside an official Act name (e.g. "and" in "Australian
+    // Charities and Not-for-profits Commission Act 2012") used to break the
+    // consecutive-word match, truncating the captured name to just the tail.
+    const text = "in the Australian Charities and Not-for-profits Commission Act 2012.";
+    expect(detectCrossReference(text, "Charities Act 2013")).toBe(
+      "Australian Charities and Not-for-profits Commission Act 2012"
+    );
+  });
+
+  it("does not let 'of the' filler bridge back to unrelated preceding text", () => {
+    // Regression test found while implementing the connector-word fix above:
+    // an early "and"/"of"/"the" allowlist bridged through ordinary filler,
+    // not just genuine mid-name connectors — "of the" here would otherwise
+    // wrongly extend the match back to "Chapter 2E of the...".
+    expect(
+      detectCrossReference("in Chapter 2E of the Corporations Act 2001.", "Some Other Act 2000")
+    ).toBe("Corporations Act 2001");
+  });
+
   it("returns null for a long genuine definition that happens to cite another Act mid-sentence", () => {
     // The regex has no positional anchor and would otherwise match this — the
     // length guard is what correctly rules it out as a real definition, not a

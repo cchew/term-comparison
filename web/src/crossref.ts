@@ -6,11 +6,25 @@
 // these with no distinguishing flag, so this is a client-side heuristic
 // applied to definition_text alone.
 
-// Captures an Act-name-and-year pattern: a run of 1-8 "words" (each starting
-// with an uppercase letter, digit, or "(" so parenthetical Act names like
-// "A New Tax System (Family Assistance) Act 1999" still match on the
-// "(Family" token) followed by whitespace, ending in "Act" + a 4-digit year.
-const ACT_NAME_PATTERN = /((?:[A-Z0-9(][\w'()-]*\s+){1,8}Act\s+\d{4})/;
+// Captures an Act-name-and-year pattern: an initial word starting with an
+// uppercase letter or "(" (so parenthetical Act names like "A New Tax System
+// (Family Assistance) Act 1999" still match on the "(Family" token, and a
+// bare leading digit — e.g. "6" in "section 6 of the Privacy Act 1988" —
+// can't itself anchor the match), followed by up to 7 more words that are
+// each either uppercase/digit/"("-started OR the connector "and" (official
+// Act titles routinely embed it mid-name, e.g. "Australian Charities and
+// Not-for-profits Commission Act 2012"), ending in "Act" + a 4-digit year.
+//
+// "of"/"the" were tried as connectors too (per the original FUTURE.md note)
+// but rejected: they're common enough as ordinary filler that they bridge
+// through unrelated preceding text on real corpus data — e.g. "in Chapter 2E
+// of the Corporations Act 2001" would wrongly capture "Chapter 2E of the
+// Corporations Act 2001" instead of just "Corporations Act 2001". Known
+// residual gap: a genuine Act title containing "of" (e.g. "Members of
+// Parliament (Staff) Act 1984") still truncates to "Parliament (Staff) Act
+// 1984" — same as before this fix, not a new regression.
+const ACT_NAME_PATTERN =
+  /([A-Z(][\w'()-]*\s+(?:(?:[A-Z0-9(][\w'()-]*|and)\s+){0,7}Act\s+\d{4})/;
 
 // The regex has no positional anchor, so it also matches a genuine, longer
 // definition that happens to cite another Act mid-sentence (e.g. "an offence
