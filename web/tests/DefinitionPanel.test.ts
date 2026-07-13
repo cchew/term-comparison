@@ -103,11 +103,28 @@ describe("DefinitionPanel", () => {
     const note = wrapper.find(".cross-ref-note");
     expect(note.exists()).toBe(true);
     expect(note.text()).toContain("Privacy Act 1988");
-    // De-emphasized raw text is still present, just not run through the highlight path.
-    expect(wrapper.text()).toContain("in the Privacy Act 1988.");
+    // The raw text says nothing beyond what the note already states, so it's suppressed.
+    expect(wrapper.find(".cross-ref-text").exists()).toBe(false);
     // The source-chip (Act title + formatted citation) sits above the cross-reference
     // branch, so it must still render normally on a cross-reference card.
     expect(card.text()).toContain("s 9");
+  });
+
+  it("still shows the raw text on a cross-reference card when it adds detail beyond the note", () => {
+    const defs: DefinitionOut[] = [
+      {
+        display_term: "personal information",
+        definition_text: "section 6 of the Privacy Act 1988",
+        act_title: "Crimes Act 1914",
+        act_frbr_uri: "/akn/au/act/1914/12",
+        section_eid: "sec-3",
+      },
+    ];
+    const wrapper = mount(DefinitionPanel, { props: { definitions: defs } });
+    const note = wrapper.find(".cross-ref-note");
+    expect(note.text()).toContain("Privacy Act 1988");
+    expect(wrapper.find(".cross-ref-text").exists()).toBe(true);
+    expect(wrapper.text()).toContain("section 6 of the Privacy Act 1988");
   });
 
   it("does not give a normal card the cross-reference treatment", () => {

@@ -6,14 +6,13 @@ import TermBrowser from "./components/TermBrowser.vue";
 import CorpusStats from "./components/CorpusStats.vue";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) ?? "http://127.0.0.1:8000";
-const FLAGSHIP_TERMS = ["personal information", "australian resident"];
+const FLAGSHIP_TERMS = ["personal information", "Australian resident", "constitutional corporation", "civil penalty provision"];
 
 const term = ref("");
 const result = ref<ComparisonResponse | null>(null);
 const loading = ref(false);
 const error = ref<string | null>(null);
-const browserExpanded = ref(true);
-const hasAutoCollapsedOnce = ref(false);
+const browserExpanded = ref(false);
 
 async function search(t: string) {
   if (!t.trim()) return;
@@ -29,10 +28,6 @@ async function search(t: string) {
     }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     result.value = await res.json();
-    if (!hasAutoCollapsedOnce.value) {
-      browserExpanded.value = false;
-      hasAutoCollapsedOnce.value = true;
-    }
   } catch (e) {
     error.value = e instanceof Error ? e.message : "Search failed";
   } finally {
@@ -45,28 +40,44 @@ async function search(t: string) {
   <div class="app-shell">
     <header class="app-header">
       <div class="app-title">
-        <h1>Act Alike — IM2026</h1>
-        <p class="subtitle">Term comparison across Commonwealth Acts — does this legal term mean the same thing everywhere it's used?</p>
+        <h1>Act Alike (IM2026)</h1>
+        <p class="subtitle">Term comparison across Commonwealth Acts: does this legal term mean the same thing everywhere it's used?</p>
       </div>
       <CorpusStats />
     </header>
-    <main>
-      <form class="search-row" @submit.prevent="search(term)">
-        <label for="term-search" class="visually-hidden">Search for a legal term</label>
-        <input id="term-search" v-model="term" type="text" placeholder="e.g. personal information" class="search-input" />
-        <button type="submit" class="search-btn">Compare</button>
-      </form>
-      <nav class="flagship-nav" aria-label="Flagship term shortcuts">
-        <button
-          v-for="t in FLAGSHIP_TERMS"
-          :key="t"
-          type="button"
-          class="flagship-btn"
-          @click="search(t)"
-        >{{ t }}</button>
-      </nav>
+    <div class="main-layout">
+      <main class="search-block">
+        <p class="search-instructions">Type a legal term, pick a shortcut below, or browse all defined terms in the panel.</p>
+        <form class="search-row" @submit.prevent="search(term)">
+          <label for="term-search" class="visually-hidden">Search for a legal term</label>
+          <input id="term-search" v-model="term" type="text" placeholder="e.g. personal information" class="search-input" />
+          <button type="submit" class="search-btn">Compare</button>
+        </form>
+        <nav class="flagship-nav" aria-label="Flagship term shortcuts">
+          <button
+            v-for="t in FLAGSHIP_TERMS"
+            :key="t"
+            type="button"
+            class="flagship-btn"
+            @click="search(t)"
+          >{{ t }}</button>
+        </nav>
+      </main>
 
-      <div class="term-browser-section">
+      <div class="results-block">
+        <p v-if="loading" class="loading">Searching...</p>
+        <p v-else-if="error" class="load-error">{{ error }}</p>
+
+        <template v-else-if="result">
+          <p v-if="result.difference_summary" class="difference-summary">{{ result.difference_summary }}</p>
+          <p v-else-if="result.definitions.length >= 2" class="difference-summary difference-summary-empty">
+            No verified summary available for this term — the definitions below weren't reconciled into a narrative this time.
+          </p>
+          <DefinitionPanel :definitions="result.definitions" :differences="result.differences" />
+        </template>
+      </div>
+
+      <aside class="browser-aside" aria-label="Browse defined terms">
         <button
           type="button"
           class="term-browser-toggle"
@@ -74,27 +85,38 @@ async function search(t: string) {
           aria-controls="term-browser-panel"
           @click="browserExpanded = !browserExpanded"
         >{{ browserExpanded ? 'Hide' : 'Browse' }} defined terms</button>
-        <div id="term-browser-panel" v-show="browserExpanded">
+        <div id="term-browser-panel" class="term-browser-panel" v-show="browserExpanded">
           <TermBrowser @select="search" />
         </div>
-      </div>
-
-      <p v-if="loading" class="loading">Searching...</p>
-      <p v-else-if="error" class="load-error">{{ error }}</p>
-
-      <template v-else-if="result">
-        <p v-if="result.difference_summary" class="difference-summary">{{ result.difference_summary }}</p>
-        <DefinitionPanel :definitions="result.definitions" :differences="result.differences" />
-      </template>
-    </main>
+      </aside>
+    </div>
   </div>
 </template>
 
 <style scoped>
 .app-shell {
-  max-width: var(--reading-width);
+  max-width: calc(var(--reading-width) + 300px);
   margin: 0 auto;
   padding: var(--s-6) var(--s-5);
+}
+
+.main-layout {
+  display: grid;
+  grid-template-areas: "search" "browser" "results";
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--s-5);
+}
+
+.search-block { grid-area: search; }
+.results-block { grid-area: results; }
+
+@media (min-width: 860px) {
+  .main-layout {
+    grid-template-areas: "search browser" "results browser";
+    grid-template-columns: minmax(0, var(--reading-width)) 260px;
+    column-gap: var(--s-6);
+    row-gap: var(--s-5);
+  }
 }
 
 .app-header {
@@ -105,6 +127,12 @@ async function search(t: string) {
 
 .app-header h1 { font-size: 1.125rem; color: var(--color-ink); }
 .subtitle { font-size: 0.75rem; color: var(--color-ink-3); margin-top: 0.2rem; }
+
+.search-instructions {
+  font-size: 0.8125rem;
+  color: var(--color-ink-3);
+  margin-bottom: var(--s-2);
+}
 
 .search-row {
   display: flex;
@@ -156,32 +184,38 @@ async function search(t: string) {
   margin-bottom: var(--s-5);
 }
 
-.term-browser-section {
-  margin-bottom: var(--s-5);
+.browser-aside {
+  grid-area: browser;
+  position: sticky;
+  top: var(--s-5);
 }
 
 .term-browser-toggle {
   font-family: var(--font-ui);
   font-size: 0.75rem;
   font-weight: 500;
-  padding: var(--s-1) var(--s-2);
-  margin-bottom: var(--s-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface);
+  padding: 0;
+  border: none;
+  background: none;
   color: var(--color-ink-2);
+  text-decoration: underline;
+  text-underline-offset: 2px;
   cursor: pointer;
-  transition: all 0.12s var(--ease-spring);
 }
 
-.term-browser-toggle:hover {
-  background: var(--color-surface-hover);
-  border-color: var(--color-ink-3);
-}
+.term-browser-toggle:hover { color: var(--color-ink); }
 
 .term-browser-toggle:focus-visible {
   outline: 2px solid var(--color-accent-border);
   outline-offset: 2px;
+}
+
+.term-browser-panel {
+  margin-top: var(--s-3);
+  padding: var(--s-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
 }
 
 .difference-summary {
@@ -193,6 +227,11 @@ async function search(t: string) {
   font-size: 0.8125rem;
   line-height: 1.6;
   color: var(--color-ink);
+}
+
+.difference-summary-empty {
+  color: var(--color-ink-3);
+  font-style: italic;
 }
 
 .load-error { color: var(--color-ink-2); font-size: 0.875rem; }

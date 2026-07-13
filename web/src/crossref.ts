@@ -30,3 +30,19 @@ export function detectCrossReference(definitionText: string, ownActTitle: string
 
   return referencedAct;
 }
+
+// Connector words that carry no information once the referenced Act's name has
+// been stripped out — "in the Privacy Act 1988." reduces to nothing but these.
+const CROSS_REFERENCE_STOPWORDS = new Set(["in", "the", "it", "has", "of", "a", "an"]);
+
+// Returns the raw definition text only when it says more than the synthesized
+// "Adopts the definition from X" note already does (e.g. a specific section
+// citation) — otherwise the two lines are the same fact twice.
+export function crossReferenceDetail(definitionText: string, referencedAct: string): string | null {
+  const withoutAct = definitionText.replace(referencedAct, "");
+  const remainingWords = withoutAct
+    .split(/[^\w]+/)
+    .map((w) => w.toLowerCase())
+    .filter((w) => w.length > 0 && !CROSS_REFERENCE_STOPWORDS.has(w));
+  return remainingWords.length > 0 ? definitionText : null;
+}

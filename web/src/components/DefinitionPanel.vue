@@ -3,7 +3,7 @@ import type { DefinitionOut, DifferenceOut } from "../types";
 import { findQuoteSpan } from "../highlight";
 import { legislationSearchUrl } from "../citation";
 import { formatSectionCitation } from "../citation-format";
-import { detectCrossReference } from "../crossref";
+import { detectCrossReference, crossReferenceDetail } from "../crossref";
 
 const props = withDefaults(
   defineProps<{ definitions: DefinitionOut[]; differences?: DifferenceOut[] }>(),
@@ -34,6 +34,12 @@ function segmentsFor(d: DefinitionOut): Segment[] {
 function crossReferenceFor(d: DefinitionOut): string | null {
   return detectCrossReference(d.definition_text, d.act_title);
 }
+
+function crossReferenceDetailFor(d: DefinitionOut): string | null {
+  const referencedAct = crossReferenceFor(d);
+  if (!referencedAct) return null;
+  return crossReferenceDetail(d.definition_text, referencedAct);
+}
 </script>
 
 <template>
@@ -53,7 +59,7 @@ function crossReferenceFor(d: DefinitionOut): string | null {
       >View on legislation.gov.au</a>
       <template v-if="crossReferenceFor(d)">
         <p class="cross-ref-note">Adopts the definition from {{ crossReferenceFor(d) }}</p>
-        <p class="definition-text cross-ref-text">{{ d.definition_text }}</p>
+        <p v-if="crossReferenceDetailFor(d)" class="definition-text cross-ref-text">{{ crossReferenceDetailFor(d) }}</p>
       </template>
       <p v-else class="definition-text">
         <span v-for="(seg, i) in segmentsFor(d)" :key="i" style="display: contents">

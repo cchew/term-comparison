@@ -82,6 +82,7 @@ term-comparison serve
 
 ## Versions
 
+- **v0.1.1** - Search UX pass: instructional copy, defined terms hidden by default, browse toggle as text link, 4 flagship shortcuts with corrected casing, right-column browse panel that doesn't interrupt page flow (reflows above results on mobile), deduped redundant cross-reference text, fallback message when a difference summary fails verification.
 - **v0.1.0** - First tagged release. Renamed "Act Alike". Corpus stats bar, defined-term browse list, quote-verified highlighting, legislation.gov.au citations, cross-reference card labeling, human-readable section citations, real axe-core accessibility scan + WCAG contrast fix, mobile viewport check.
 
 ## License

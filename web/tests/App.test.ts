@@ -28,7 +28,9 @@ describe("App", () => {
   it("renders the flagship term quick-select buttons", () => {
     const wrapper = mount(App);
     expect(wrapper.text()).toContain("personal information");
-    expect(wrapper.text()).toContain("australian resident");
+    expect(wrapper.text()).toContain("Australian resident");
+    expect(wrapper.text()).toContain("constitutional corporation");
+    expect(wrapper.text()).toContain("civil penalty provision");
   });
 
   it("searching a flagship term renders its definitions", async () => {
@@ -104,68 +106,63 @@ describe("App", () => {
     expect(wrapper.findAll("mark")).toHaveLength(1);
   });
 
-  it("shows the term browser expanded by default", () => {
+  it("hides the term browser by default", () => {
     const wrapper = mount(App, { attachTo: document.body });
-    expect(wrapper.find("#term-browser-panel").isVisible()).toBe(true);
-    expect(wrapper.find(".term-browser-toggle").attributes("aria-expanded")).toBe("true");
-    wrapper.unmount();
-  });
-
-  it("auto-collapses the term browser after a successful search", async () => {
-    const wrapper = mount(App, { attachTo: document.body });
-    expect(wrapper.find("#term-browser-panel").isVisible()).toBe(true);
-
-    await wrapper.get(".flagship-btn").trigger("click");
-    await flushPromises();
-
     expect(wrapper.find("#term-browser-panel").isVisible()).toBe(false);
     expect(wrapper.find(".term-browser-toggle").attributes("aria-expanded")).toBe("false");
     wrapper.unmount();
   });
 
-  it("does not auto-collapse the term browser on a 404 (no result)", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 404, json: async () => ({}) })));
+  it("lets the toggle button expand and hide the term browser", async () => {
     const wrapper = mount(App, { attachTo: document.body });
-    await wrapper.find(".search-input").setValue("not a real term");
-    await wrapper.find(".search-row").trigger("submit.prevent");
-    await flushPromises();
 
+    await wrapper.get(".term-browser-toggle").trigger("click");
     expect(wrapper.find("#term-browser-panel").isVisible()).toBe(true);
+    expect(wrapper.find(".term-browser-toggle").attributes("aria-expanded")).toBe("true");
+
+    await wrapper.get(".term-browser-toggle").trigger("click");
+    expect(wrapper.find("#term-browser-panel").isVisible()).toBe(false);
     wrapper.unmount();
   });
 
-  it("lets the toggle button re-expand the term browser after auto-collapse", async () => {
+  it("does not change the term browser's expanded state when a search runs", async () => {
     const wrapper = mount(App, { attachTo: document.body });
+
+    await wrapper.get(".term-browser-toggle").trigger("click");
+    expect(wrapper.find("#term-browser-panel").isVisible()).toBe(true);
+
     await wrapper.get(".flagship-btn").trigger("click");
     await flushPromises();
-    expect(wrapper.find("#term-browser-panel").isVisible()).toBe(false);
-
-    await wrapper.get(".term-browser-toggle").trigger("click");
 
     expect(wrapper.find("#term-browser-panel").isVisible()).toBe(true);
     expect(wrapper.find(".term-browser-toggle").attributes("aria-expanded")).toBe("true");
     wrapper.unmount();
   });
 
-  it("respects a manual re-expand across a second successful search (does not re-collapse)", async () => {
-    const wrapper = mount(App, { attachTo: document.body });
-
-    // First search: auto-collapse fires as intended.
-    await wrapper.get(".flagship-btn:nth-of-type(1)").trigger("click");
+  it("shows a fallback message when 2+ definitions have no verified summary", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      if (url.includes("/terms")) return { ok: true, status: 200, json: async () => [] };
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          ...RESPONSE,
+          definitions: [...RESPONSE.definitions, { ...RESPONSE.definitions[0], act_title: "Crimes Act 1914" }],
+          difference_summary: null,
+        }),
+      };
+    }));
+    const wrapper = mount(App);
+    await wrapper.get(".flagship-btn").trigger("click");
     await flushPromises();
-    expect(wrapper.find("#term-browser-panel").isVisible()).toBe(false);
+    expect(wrapper.find(".difference-summary-empty").exists()).toBe(true);
+  });
 
-    // User manually re-expands to browse for a different term.
-    await wrapper.get(".term-browser-toggle").trigger("click");
-    expect(wrapper.find("#term-browser-panel").isVisible()).toBe(true);
-
-    // Second successful search (different term) must not override the user's choice.
-    await wrapper.get(".flagship-btn:nth-of-type(2)").trigger("click");
+  it("shows no fallback message for a single-definition term with no summary", async () => {
+    const wrapper = mount(App);
+    await wrapper.get(".flagship-btn").trigger("click");
     await flushPromises();
-
-    expect(wrapper.find("#term-browser-panel").isVisible()).toBe(true);
-    expect(wrapper.find(".term-browser-toggle").attributes("aria-expanded")).toBe("true");
-    wrapper.unmount();
+    expect(wrapper.find(".difference-summary-empty").exists()).toBe(false);
   });
 
   it("renders CorpusStats near the header", async () => {
