@@ -1,6 +1,8 @@
 # src/term_comparison/api.py
 from __future__ import annotations
 
+import re
+
 import anthropic
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -15,6 +17,38 @@ from term_comparison.models import (
     MultiActTermOut,
     StatsOut,
 )
+
+
+_BARE_FRAGMENT_RE = re.compile(r"^(any of )?the following:$", re.IGNORECASE)
+
+
+def _is_bare_fragment(normalised_text: str) -> bool:
+    return bool(_BARE_FRAGMENT_RE.match(normalised_text))
+
+
+def _fallback_summary(definitions: list[DefinitionOut]) -> str | None:
+    """Deterministic, LLM-free fallback headline for when no verified LLM summary
+    exists. Mirrors summarise_differences' own "nothing to compare" cutoff — a
+    single-Act term never gets a fallback message implying a comparison happened.
+    """
+    if len(definitions) < 2:
+        return None
+
+    seen: set[str] = set()
+    substantive_count = 0
+    for d in definitions:
+        normalised = re.sub(r"\s+", " ", d.definition_text.strip())
+        if not normalised or _is_bare_fragment(normalised):
+            continue
+        key = normalised.lower()
+        if key not in seen:
+            seen.add(key)
+            substantive_count += 1
+
+    act_count = len(definitions)
+    if substantive_count >= 2:
+        return f"{substantive_count} distinct definition texts found across {act_count} Acts — see below."
+    return f"Definitions found in {act_count} Acts, but full text wasn't extracted for this term — see Known limitations."
 
 
 def create_app(resolver: DefinitionResolver, client: anthropic.Anthropic | None = None) -> FastAPI:
@@ -53,7 +87,7 @@ def create_app(resolver: DefinitionResolver, client: anthropic.Anthropic | None 
         return ComparisonResponse(
             term=term,
             definitions=definitions,
-            difference_summary=diff_result.summary if diff_result else None,
+            difference_summary=diff_result.summary if diff_result else _fallback_summary(definitions),
             differences=(
                 [DifferenceOut(act_title=d.act_title, quote=d.quote, note=d.note) for d in diff_result.differences]
                 if diff_result

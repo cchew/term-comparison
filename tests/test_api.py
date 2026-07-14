@@ -69,6 +69,90 @@ def _build_test_resolver() -> DefinitionResolver:
     return DefinitionResolver(graph)
 
 
+def _build_fragment_test_resolver() -> DefinitionResolver:
+    """Two Acts whose definition_text is a bare, content-free lead-in fragment —
+    the corpus-truncation artifact documented in FUTURE.md."""
+    graph = LexAuGraph()
+
+    act_a = ActData(
+        act_node=ActNode(frbr_uri="/akn/au/act/1997/38", title="Income Tax Assessment Act 1997", year=1997),
+        sections=[
+            SectionNode(
+                eid="sec-995-1",
+                act_frbr_uri="/akn/au/act/1997/38",
+                heading="Definitions",
+                text="entity means any of the following:",
+            ),
+        ],
+        defined_terms=[
+            DefinedTermNode(
+                term="entity",
+                display_term="entity",
+                act_frbr_uri="/akn/au/act/1997/38",
+                section_eid="sec-995-1",
+                definition_text="any of the following:",
+            ),
+        ],
+        ref_edges=[],
+    )
+
+    act_b = ActData(
+        act_node=ActNode(frbr_uri="/akn/au/act/1999/85", title="A New Tax System (Goods and Services Tax) Act 1999", year=1999),
+        sections=[
+            SectionNode(
+                eid="sec-195-1",
+                act_frbr_uri="/akn/au/act/1999/85",
+                heading="Dictionary",
+                text="entity means the following:",
+            ),
+        ],
+        defined_terms=[
+            DefinedTermNode(
+                term="entity",
+                display_term="entity",
+                act_frbr_uri="/akn/au/act/1999/85",
+                section_eid="sec-195-1",
+                definition_text="the following:",
+            ),
+        ],
+        ref_edges=[],
+    )
+
+    graph.add_act_data(act_a)
+    graph.add_act_data(act_b)
+    return DefinitionResolver(graph)
+
+
+def _build_single_act_resolver() -> DefinitionResolver:
+    """One Act only — nothing to compare, fallback must stay None."""
+    graph = LexAuGraph()
+
+    act_a = ActData(
+        act_node=ActNode(frbr_uri="/akn/au/act/1991/46", title="Social Security Act 1991", year=1991),
+        sections=[
+            SectionNode(
+                eid="sec-1020",
+                act_frbr_uri="/akn/au/act/1991/46",
+                heading="Income support payment",
+                text="income support payment means a social security benefit or a social security pension.",
+            ),
+        ],
+        defined_terms=[
+            DefinedTermNode(
+                term="income support payment",
+                display_term="income support payment",
+                act_frbr_uri="/akn/au/act/1991/46",
+                section_eid="sec-1020",
+                definition_text="a social security benefit or a social security pension.",
+            ),
+        ],
+        ref_edges=[],
+    )
+
+    graph.add_act_data(act_a)
+    return DefinitionResolver(graph)
+
+
 def test_get_definitions_returns_all_acts_for_term():
     resolver = _build_test_resolver()
     app = create_app(resolver)
@@ -85,7 +169,7 @@ def test_get_definitions_returns_all_acts_for_term():
         "Social Security Act 1991",
         "Superannuation Industry (Supervision) Act 1993",
     }
-    assert data["difference_summary"] is None
+    assert data["difference_summary"] == "2 distinct definition texts found across 2 Acts — see below."
 
 
 def test_get_definitions_404_for_unknown_term():
@@ -125,18 +209,18 @@ def test_get_definitions_populates_difference_summary_with_client():
     assert data["difference_summary"] == "The Acts describe the same payment concept in different words."
 
 
-def test_get_definitions_difference_summary_none_without_client():
+def test_get_definitions_fallback_summary_without_client():
     resolver = _build_test_resolver()
-    app = create_app(resolver)  # no client — default behaviour, unchanged from before this task
+    app = create_app(resolver)  # no client configured
     client = TestClient(app)
 
     response = client.get("/definitions", params={"term": "income support payment"})
 
-    assert response.json()["difference_summary"] is None
+    assert response.json()["difference_summary"] == "2 distinct definition texts found across 2 Acts — see below."
 
 
 def test_get_definitions_survives_unexpected_llm_exception():
-    """A summary-layer failure must never take down the whole /definitions response.
+    """A summary-layer failure must still surface a deterministic fallback headline, not a bare null.
 
     llm.py's summarise_differences only catches anthropic.APIError internally. This
     test raises a bare ValueError from the mocked client — something llm.py does NOT
@@ -160,7 +244,7 @@ def test_get_definitions_survives_unexpected_llm_exception():
         "Social Security Act 1991",
         "Superannuation Industry (Supervision) Act 1993",
     }
-    assert data["difference_summary"] is None
+    assert data["difference_summary"] == "2 distinct definition texts found across 2 Acts — see below."
 
 
 def test_get_definitions_populates_differences_with_client():
@@ -243,3 +327,26 @@ def test_get_terms_default_min_acts_excludes_two_act_term():
 
     assert response.status_code == 200
     assert response.json() == []
+
+
+def test_get_definitions_fallback_summary_all_fragments():
+    resolver = _build_fragment_test_resolver()
+    app = create_app(resolver)  # no client configured
+    client = TestClient(app)
+
+    response = client.get("/definitions", params={"term": "entity"})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["difference_summary"] == "Definitions found in 2 Acts, but full text wasn't extracted for this term — see Known limitations."
+
+
+def test_get_definitions_no_fallback_for_single_definition():
+    resolver = _build_single_act_resolver()
+    app = create_app(resolver)  # no client configured
+    client = TestClient(app)
+
+    response = client.get("/definitions", params={"term": "income support payment"})
+
+    assert response.status_code == 200
+    assert response.json()["difference_summary"] is None
