@@ -30,4 +30,11 @@ describe("AboutModal", () => {
     await wrapper.find(".modal-backdrop").trigger("click");
     expect(wrapper.emitted("close")).toHaveLength(1);
   });
+
+  it("emits close when Escape is pressed", async () => {
+    const wrapper = mount(AboutModal, { props: { open: true } });
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    await wrapper.vm.$nextTick();
+    expect(wrapper.emitted("close")).toHaveLength(1);
+  });
 });

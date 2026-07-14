@@ -44,7 +44,7 @@ async function search(t: string) {
       <div class="app-title">
         <div class="title-row">
           <h1>Act Alike (IM2026)</h1>
-          <button type="button" class="help-btn" @click="aboutOpen = true" aria-label="How this works">?</button>
+          <button type="button" class="help-btn" @click="aboutOpen = true" aria-label="How Act Alike works">?</button>
         </div>
         <p class="subtitle">Term comparison across Commonwealth Acts: does this legal term mean the same thing everywhere it's used?</p>
       </div>

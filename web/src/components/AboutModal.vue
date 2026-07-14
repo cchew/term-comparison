@@ -1,12 +1,31 @@
 <script setup lang="ts">
+import { onMounted, onUnmounted, ref } from "vue";
+
 defineProps<{ open: boolean }>();
-defineEmits<{ close: [] }>();
+const emit = defineEmits<{ close: [] }>();
+
+const closeButton = ref<HTMLButtonElement | null>(null);
+
+function onKeydown(event: KeyboardEvent) {
+  if (event.key === "Escape") {
+    emit("close");
+  }
+}
+
+onMounted(() => {
+  window.addEventListener("keydown", onKeydown);
+  closeButton.value?.focus();
+});
+
+onUnmounted(() => {
+  window.removeEventListener("keydown", onKeydown);
+});
 </script>
 
 <template>
   <div v-if="open" data-testid="about-modal" class="modal-backdrop" @click.self="$emit('close')">
     <div class="modal-panel" role="dialog" aria-modal="true" aria-label="How Act Alike works">
-      <button data-testid="about-close" class="modal-close" @click="$emit('close')" aria-label="Close">✕</button>
+      <button ref="closeButton" data-testid="about-close" class="modal-close" @click="$emit('close')" aria-label="Close">✕</button>
 
       <section class="modal-section">
         <h2>What this does</h2>

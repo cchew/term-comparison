@@ -19,6 +19,7 @@ from term_comparison.models import (
 )
 
 
+# Deliberately narrow: matches only the two fragment shapes FUTURE.md documents, not every possible truncated lead-in.
 _BARE_FRAGMENT_RE = re.compile(r"^(any of )?the following:$", re.IGNORECASE)
 
 
