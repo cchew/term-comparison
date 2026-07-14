@@ -139,7 +139,11 @@ describe("App", () => {
     wrapper.unmount();
   });
 
-  it("shows a fallback message when 2+ definitions have no verified summary", async () => {
+  it("renders no difference-summary paragraph when the API sends a null summary", async () => {
+    // Contract note: the real backend (see api.py's _fallback_summary) now always
+    // sends a non-null string when 2+ definitions exist. This test only guards
+    // against the frontend crashing/rendering stale filler text if that contract
+    // is ever violated (e.g. deploy skew) — it is not a designed UX state.
     vi.stubGlobal("fetch", vi.fn(async (url: string) => {
       if (url.includes("/terms")) return { ok: true, status: 200, json: async () => [] };
       return {
@@ -155,14 +159,7 @@ describe("App", () => {
     const wrapper = mount(App);
     await wrapper.get(".flagship-btn").trigger("click");
     await flushPromises();
-    expect(wrapper.find(".difference-summary-empty").exists()).toBe(true);
-  });
-
-  it("shows no fallback message for a single-definition term with no summary", async () => {
-    const wrapper = mount(App);
-    await wrapper.get(".flagship-btn").trigger("click");
-    await flushPromises();
-    expect(wrapper.find(".difference-summary-empty").exists()).toBe(false);
+    expect(wrapper.find(".difference-summary").exists()).toBe(false);
   });
 
   it("renders CorpusStats near the header", async () => {

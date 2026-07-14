@@ -71,9 +71,6 @@ async function search(t: string) {
 
           <template v-else-if="result">
             <p v-if="result.difference_summary" class="difference-summary">{{ result.difference_summary }}</p>
-            <p v-else-if="result.definitions.length >= 2" class="difference-summary difference-summary-empty">
-              No verified summary available for this term — the definitions below weren't reconciled into a narrative this time.
-            </p>
             <DefinitionPanel :definitions="result.definitions" :differences="result.differences" />
           </template>
         </div>
@@ -237,11 +234,6 @@ async function search(t: string) {
   font-size: 0.8125rem;
   line-height: 1.6;
   color: var(--color-ink);
-}
-
-.difference-summary-empty {
-  color: var(--color-ink-3);
-  font-style: italic;
 }
 
 .load-error { color: var(--color-ink-2); font-size: 0.875rem; }
