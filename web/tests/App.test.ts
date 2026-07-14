@@ -174,4 +174,10 @@ describe("App", () => {
     await flushPromises();
     expect(wrapper.find(".corpus-stats").exists()).toBe(true);
   });
+
+  it("shows the disclaimer footer on load, with no interaction required", () => {
+    const wrapper = mount(App);
+    expect(wrapper.find(".disclaimer").exists()).toBe(true);
+    expect(wrapper.find(".disclaimer").text()).toContain("Not an official government service");
+  });
 });

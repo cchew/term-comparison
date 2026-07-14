@@ -89,6 +89,7 @@ async function search(t: string) {
         </div>
       </aside>
     </div>
+    <footer class="disclaimer">Not an official government service. AI-generated summaries may be inaccurate — always verify against the cited legislation.</footer>
   </div>
 </template>
 
@@ -238,4 +239,12 @@ async function search(t: string) {
 
 .load-error { color: var(--color-ink-2); font-size: 0.875rem; }
 .loading { color: var(--color-ink-3); font-size: 0.875rem; }
+
+.disclaimer {
+  margin-top: var(--s-5);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--color-border);
+  font-size: 0.75rem;
+  color: var(--color-ink-3);
+}
 </style>
