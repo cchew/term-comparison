@@ -88,3 +88,22 @@ test.describe("Term comparison — browse list", () => {
     await expect(page.locator(".definition-card").first()).toBeVisible();
   });
 });
+
+test.describe("About modal and disclaimer", () => {
+  test("disclaimer is visible on page load with no interaction", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator(".disclaimer")).toContainText("Not an official government service");
+  });
+
+  test("? button opens the About modal and the close button closes it", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator('[data-testid="about-modal"]')).toHaveCount(0);
+
+    await page.locator(".help-btn").click();
+    await expect(page.locator('[data-testid="about-modal"]')).toBeVisible();
+    await expect(page.locator('[data-testid="about-modal"]')).toContainText("How it's built");
+
+    await page.locator('[data-testid="about-close"]').click();
+    await expect(page.locator('[data-testid="about-modal"]')).toHaveCount(0);
+  });
+});

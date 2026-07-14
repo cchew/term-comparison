@@ -25,6 +25,17 @@ test.describe("Accessibility", () => {
     );
     expect(seriousOrCritical, JSON.stringify(seriousOrCritical, null, 2)).toEqual([]);
   });
+
+  test("About modal open has no serious or critical axe violations", async ({ page }) => {
+    await page.goto("/");
+    await page.locator(".help-btn").click();
+    await page.waitForSelector('[data-testid="about-modal"]');
+    const results = await new AxeBuilder({ page }).analyze();
+    const seriousOrCritical = results.violations.filter(
+      (v) => v.impact === "serious" || v.impact === "critical"
+    );
+    expect(seriousOrCritical, JSON.stringify(seriousOrCritical, null, 2)).toEqual([]);
+  });
 });
 
 test.describe("Mobile viewport (375px)", () => {
