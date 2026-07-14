@@ -180,4 +180,15 @@ describe("App", () => {
     expect(wrapper.find(".disclaimer").exists()).toBe(true);
     expect(wrapper.find(".disclaimer").text()).toContain("Not an official government service");
   });
+
+  it("opens and closes the About modal from the help button", async () => {
+    const wrapper = mount(App);
+    expect(wrapper.find('[data-testid="about-modal"]').exists()).toBe(false);
+
+    await wrapper.find(".help-btn").trigger("click");
+    expect(wrapper.find('[data-testid="about-modal"]').exists()).toBe(true);
+
+    await wrapper.find('[data-testid="about-close"]').trigger("click");
+    expect(wrapper.find('[data-testid="about-modal"]').exists()).toBe(false);
+  });
 });

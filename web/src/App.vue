@@ -4,6 +4,7 @@ import type { ComparisonResponse } from "./types";
 import DefinitionPanel from "./components/DefinitionPanel.vue";
 import TermBrowser from "./components/TermBrowser.vue";
 import CorpusStats from "./components/CorpusStats.vue";
+import AboutModal from "./components/AboutModal.vue";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) ?? "http://127.0.0.1:8000";
 const FLAGSHIP_TERMS = ["personal information", "Australian resident", "constitutional corporation", "civil penalty provision"];
@@ -13,6 +14,7 @@ const result = ref<ComparisonResponse | null>(null);
 const loading = ref(false);
 const error = ref<string | null>(null);
 const browserExpanded = ref(false);
+const aboutOpen = ref(false);
 
 async function search(t: string) {
   if (!t.trim()) return;
@@ -40,7 +42,10 @@ async function search(t: string) {
   <div class="app-shell">
     <header class="app-header">
       <div class="app-title">
-        <h1>Act Alike (IM2026)</h1>
+        <div class="title-row">
+          <h1>Act Alike (IM2026)</h1>
+          <button type="button" class="help-btn" @click="aboutOpen = true" aria-label="How this works">?</button>
+        </div>
         <p class="subtitle">Term comparison across Commonwealth Acts: does this legal term mean the same thing everywhere it's used?</p>
       </div>
       <CorpusStats />
@@ -90,6 +95,7 @@ async function search(t: string) {
       </aside>
     </div>
     <footer class="disclaimer">Not an official government service. AI-generated summaries may be inaccurate — always verify against the cited legislation.</footer>
+    <AboutModal :open="aboutOpen" @close="aboutOpen = false" />
   </div>
 </template>
 
@@ -246,5 +252,32 @@ async function search(t: string) {
   border-top: 1px solid var(--color-border);
   font-size: 0.75rem;
   color: var(--color-ink-3);
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.help-btn {
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  font-weight: 600;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-ink-2);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.help-btn:hover { background: var(--color-surface-hover); }
+
+.help-btn:focus-visible {
+  outline: 2px solid var(--color-accent-border);
+  outline-offset: 2px;
 }
 </style>
