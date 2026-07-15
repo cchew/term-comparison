@@ -14,3 +14,6 @@ web/playwright-report/
 
 # Isolated feature-branch workspaces
 .worktrees/
+
+# Superpowers planning docs live in the EA wrapper repo, not here
+docs/superpowers/
