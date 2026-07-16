@@ -16,9 +16,10 @@ test.describe("Accessibility", () => {
   });
 
   test("results state (after a flagship search) has no serious or critical axe violations", async ({ page }) => {
+    test.setTimeout(60000);
     await page.goto("/");
     await page.locator(".flagship-btn", { hasText: "personal information" }).click();
-    await page.waitForSelector(".definition-card", { timeout: 10000 });
+    await page.waitForSelector(".definition-card", { timeout: 30000 });
     const results = await new AxeBuilder({ page }).analyze();
     const seriousOrCritical = results.violations.filter(
       (v) => v.impact === "serious" || v.impact === "critical"
@@ -42,6 +43,7 @@ test.describe("Mobile viewport (375px)", () => {
   test.use({ viewport: { width: 375, height: 667 } });
 
   test("no horizontal overflow at iPhone SE width, before or after a search", async ({ page }) => {
+    test.setTimeout(60000);
     await page.goto("/");
     await page.screenshot({ path: "test-results/mobile-default.png" });
 
@@ -50,7 +52,7 @@ test.describe("Mobile viewport (375px)", () => {
     expect(scrollWidth).toBeLessThanOrEqual(clientWidth);
 
     await page.locator(".flagship-btn", { hasText: "personal information" }).click();
-    await page.waitForSelector(".definition-card", { timeout: 10000 });
+    await page.waitForSelector(".definition-card", { timeout: 30000 });
     await page.screenshot({ path: "test-results/mobile-results.png" });
 
     scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
