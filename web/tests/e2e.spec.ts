@@ -39,6 +39,22 @@ test.describe("Term comparison — flagship terms", () => {
     await expect(page.locator(".load-error")).toContainText("No Commonwealth Act defines");
   });
 
+  test("a previously-truncated list-form definition now shows full content", async ({ page }) => {
+    test.setTimeout(60000);
+    await page.goto("/");
+    await page.locator(".search-input").fill("entity");
+    await page.locator(".search-btn").click();
+    await page.waitForSelector(".definition-card", { timeout: 30000 });
+    const cards = page.locator(".definition-card");
+    expect(await cards.count()).toBeGreaterThan(0);
+    const firstCardText = await cards.first().innerText();
+    // Before the fix, this card's definition text was a bare fragment
+    // ending in "the following:" with nothing after it. Confirm real list
+    // content is now present and visible, not clipped.
+    expect(firstCardText.trim().endsWith("the following:")).toBe(false);
+    expect(firstCardText.length).toBeGreaterThan(60);
+  });
+
   test("clicking 'personal information' renders a non-empty difference summary", async ({ page }) => {
     test.setTimeout(60000);
     await page.goto("/");
