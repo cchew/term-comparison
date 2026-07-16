@@ -46,7 +46,6 @@ onUnmounted(() => {
         <h2>Known limitations</h2>
         <ul>
           <li><strong>Corpus coverage.</strong> Some Acts' definitions haven't been extracted yet by the underlying legislation pipeline. A "no results" response means the term isn't tagged in the corpus yet — not that it's undefined in Australian law.</li>
-          <li><strong>Paragraph-list definitions.</strong> Some definitions written as a list ("(a)... (b)... (c)...") currently extract only the lead-in phrase, not the full list content.</li>
         </ul>
       </section>
 
