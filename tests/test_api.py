@@ -387,3 +387,61 @@ def test_get_definitions_no_fallback_for_single_definition():
 
     assert response.status_code == 200
     assert response.json()["difference_summary"] is None
+
+
+def _build_multi_meaning_resolver() -> DefinitionResolver:
+    """One Act, one term, two genuinely different meanings -- the node_id MVP
+    scenario (e.g. ITAA 1936's real 'exempt income', which has 4 distinct
+    meanings in the live corpus). Requires lex-au-graph's occurrence-
+    disambiguated node_id for both DefinedTermNodes to survive as separate
+    graph nodes -- this fixture directly exercises that."""
+    graph = LexAuGraph()
+    act = ActData(
+        act_node=ActNode(frbr_uri="/akn/au/act/1936/27", title="Income Tax Assessment Act 1936", year=1936),
+        sections=[
+            SectionNode(
+                eid="part-III__sec-23",
+                act_frbr_uri="/akn/au/act/1936/27",
+                heading="Exemptions",
+                text="exempt income means ...",
+            ),
+        ],
+        defined_terms=[
+            DefinedTermNode(
+                term="exempt income",
+                display_term="exempt income",
+                act_frbr_uri="/akn/au/act/1936/27",
+                section_eid="part-III__sec-23",
+                definition_text="income derived from a source outside Australia by a resident.",
+            ),
+            DefinedTermNode(
+                term="exempt income",
+                display_term="exempt income",
+                act_frbr_uri="/akn/au/act/1936/27",
+                section_eid="part-III__sec-23",
+                definition_text="a pension, allowance or benefit specified in Schedule 5.",
+            ),
+        ],
+        ref_edges=[],
+    )
+    graph.add_act_data(act)
+    return DefinitionResolver(graph)
+
+
+def test_get_definitions_returns_multiple_meanings_same_act():
+    """Regression for the node_id MVP fix: a term with 2 genuinely different
+    meanings within ONE Act must return both, not silently show only one."""
+    resolver = _build_multi_meaning_resolver()
+    app = create_app(resolver)
+    client = TestClient(app)
+
+    response = client.get("/definitions", params={"term": "exempt income"})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["definitions"]) == 2
+    act_titles = {d["act_title"] for d in data["definitions"]}
+    assert act_titles == {"Income Tax Assessment Act 1936"}
+    def_texts = {d["definition_text"] for d in data["definitions"]}
+    assert "income derived from a source outside Australia by a resident." in def_texts
+    assert "a pension, allowance or benefit specified in Schedule 5." in def_texts
