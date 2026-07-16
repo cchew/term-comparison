@@ -341,6 +341,43 @@ def test_get_definitions_fallback_summary_all_fragments():
     assert data["difference_summary"] == "Definitions found in 2 Acts, but full text wasn't extracted for this term — see Known limitations."
 
 
+def test_fallback_summary_no_longer_fires_for_completed_definitions():
+    """Regression for the list-definition-truncation fix: once definition_text
+    is complete (contains real list content, not just a bare colon-terminated
+    lead-in), _fallback_summary must return the normal distinct-count message,
+    not the 'wasn't extracted' fallback. _is_bare_fragment's regex only matches
+    the exact bare fragment shape ("the following:" / "any of the following:"),
+    so this is a pure-function test proving no term-comparison code change is
+    needed once the upstream corpus fix lands -- no live corpus/graph needed."""
+    from term_comparison.api import _fallback_summary
+    from term_comparison.models import DefinitionOut
+
+    definitions = [
+        DefinitionOut(
+            display_term="entity",
+            definition_text=(
+                "any of the following: (a) an individual; (b) a body corporate; "
+                "(c) a body politic; (d) a partnership;"
+            ),
+            act_title="Income Tax Assessment Act 1997",
+            act_frbr_uri="/akn/au/act/1997/38",
+            section_eid="sec-995-1",
+        ),
+        DefinitionOut(
+            display_term="entity",
+            definition_text=(
+                "the following: (a) an individual; (b) a body corporate; (c) a trust;"
+            ),
+            act_title="A New Tax System (Goods and Services Tax) Act 1999",
+            act_frbr_uri="/akn/au/act/1999/85",
+            section_eid="sec-195-1",
+        ),
+    ]
+
+    summary = _fallback_summary(definitions)
+    assert summary == "2 distinct definition texts found across 2 Acts — see below."
+
+
 def test_get_definitions_no_fallback_for_single_definition():
     resolver = _build_single_act_resolver()
     app = create_app(resolver)  # no client configured
