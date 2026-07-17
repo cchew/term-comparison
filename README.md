@@ -82,6 +82,7 @@ term-comparison serve
 
 ## Versions
 
+- **v0.1.4** - IM2026 competition submission. Review fixes on the polish pass: stable-height corpus stats placeholder (fixes guided-tour first-highlight misalignment), "Legend:" label, browse panel no longer overflows the viewport with no search results.
 - **v0.1.3** - Polish pass: guided first-visit tour, progressive quick/full results split, corpus-coverage warning banner, panel-style legend, sticky footer, build-pipeline diagram, GitHub repo link.
 - **v0.1.2** - Trust/reliability pass: deterministic fallback summary, persistent disclaimer, "How this works" trust modal, e2e/a11y coverage.
 - **v0.1.1** - Search UX pass: instructional copy, hidden-by-default term browser, flagship shortcuts, reflowing browse panel, verification fallback messaging.
