@@ -134,6 +134,29 @@ test.describe("Term comparison — browse list", () => {
   });
 });
 
+test.describe("Browse panel height", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem("act-alike-tour-seen", "1"));
+  });
+
+  // Regression: the panel's max-height was computed from a static vh formula
+  // that didn't know the header's or footer's real rendered height, so with
+  // no search performed (nothing pushing the page taller than the viewport)
+  // expanding the full ~1,550-term list ran the panel past the viewport
+  // bottom and forced a page-level scrollbar. See App.vue's updateAsideMaxHeight.
+  test("expanding the full term list with no search results causes no page overflow", async ({ page }) => {
+    test.setTimeout(30000);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/");
+    await page.click(".term-browser-toggle");
+    await page.waitForSelector(".term-chip", { timeout: 10000 });
+
+    const scrollHeight = await page.evaluate(() => document.body.scrollHeight);
+    const viewportHeight = await page.evaluate(() => window.innerHeight);
+    expect(scrollHeight).toBeLessThanOrEqual(viewportHeight);
+  });
+});
+
 test.describe("About modal and disclaimer", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => localStorage.setItem("act-alike-tour-seen", "1"));

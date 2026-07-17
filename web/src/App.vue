@@ -45,6 +45,44 @@ onMounted(() => {
   if (!hasSeenTour()) startTour();
 });
 
+const mainLayoutEl = ref<HTMLElement | null>(null);
+const footerEl = ref<HTMLElement | null>(null);
+let asideHeightObserver: ResizeObserver | null = null;
+
+// The browse panel's max-height (--browser-aside-max-height, read in the
+// scoped <style>) needs the true remaining space below main-layout's actual
+// start position and above the footer's actual start position — not a
+// hand-enumerated sum of every margin/padding between them (tried that,
+// missed one each of three separate times: header's margin-bottom, footer's
+// margin-top, .app-shell's bottom padding). Measuring the two containers'
+// real rendered edges directly sidesteps needing to know about any of them.
+function updateAsideMaxHeight(): void {
+  if (!mainLayoutEl.value || !footerEl.value) return;
+  const topBound = mainLayoutEl.value.getBoundingClientRect().top;
+  const footerStyle = getComputedStyle(footerEl.value);
+  const footerBox = footerEl.value.getBoundingClientRect();
+  const footerReservedHeight = footerBox.height + parseFloat(footerStyle.marginTop || "0");
+  // .app-shell's own bottom padding is real space below the footer too —
+  // read it off the actual parent rather than assuming a token value.
+  const shellEl = mainLayoutEl.value.parentElement;
+  const shellPaddingBottom = shellEl ? parseFloat(getComputedStyle(shellEl).paddingBottom || "0") : 0;
+  const available = window.innerHeight - topBound - footerReservedHeight - shellPaddingBottom;
+  document.documentElement.style.setProperty("--browser-aside-max-height", `${Math.max(0, Math.floor(available))}px`);
+}
+
+onMounted(() => {
+  updateAsideMaxHeight();
+  asideHeightObserver = new ResizeObserver(updateAsideMaxHeight);
+  if (mainLayoutEl.value) asideHeightObserver.observe(mainLayoutEl.value);
+  if (footerEl.value) asideHeightObserver.observe(footerEl.value);
+  window.addEventListener("resize", updateAsideMaxHeight);
+});
+
+onUnmounted(() => {
+  asideHeightObserver?.disconnect();
+  window.removeEventListener("resize", updateAsideMaxHeight);
+});
+
 const coverageWarning = computed<string | null>(() => {
   if (!result.value) return null;
   const titles = new Set(result.value.definitions.map((d) => d.act_title));
@@ -113,7 +151,7 @@ async function search(t: string) {
       </div>
       <CorpusStats />
     </header>
-    <div class="main-layout">
+    <div class="main-layout" ref="mainLayoutEl">
       <div class="content-col">
         <main class="search-block">
           <p class="search-instructions">Type a legal term, pick a shortcut below or browse all defined terms in the panel.</p>
@@ -146,6 +184,7 @@ async function search(t: string) {
             </p>
 
             <div v-if="result.definitions.length" class="results-legend" aria-label="Panel style legend">
+              <span class="legend-key">Legend:</span>
               <span class="legend-item"><span class="legend-swatch legend-swatch--solid" aria-hidden="true"></span>Act's own definition</span>
               <span class="legend-item"><span class="legend-swatch legend-swatch--dashed" aria-hidden="true"></span>Cross-reference to another Act</span>
               <span class="legend-item"><span class="legend-mark">text</span>Passage quoted in the summary above</span>
@@ -170,7 +209,7 @@ async function search(t: string) {
         </div>
       </aside>
     </div>
-    <footer class="disclaimer">Not an official government service. AI-generated summaries may be inaccurate — always verify against the cited legislation.</footer>
+    <footer class="disclaimer" ref="footerEl">Not an official government service. AI-generated summaries may be inaccurate — always verify against the cited legislation.</footer>
     <AboutModal :open="aboutOpen" @close="aboutOpen = false" />
   </div>
 </template>
@@ -259,11 +298,6 @@ async function search(t: string) {
 
 .browser-aside {
   grid-area: browser;
-  position: sticky;
-  top: var(--s-5);
-  max-height: calc(100vh - var(--s-5) * 2);
-  display: flex;
-  flex-direction: column;
 }
 
 @media (min-width: 860px) {
@@ -280,7 +314,21 @@ async function search(t: string) {
     grid-area: content;
   }
 
-  .browser-aside { grid-area: aside; }
+  .browser-aside {
+    grid-area: aside;
+    position: sticky;
+    top: var(--s-5);
+    /* The page itself must still grow taller than the viewport for long
+       result lists, so this can't be a "stretch to fill parent" layout —
+       the aside needs its own hard cap. --browser-aside-max-height is
+       measured in script (header bottom + footer height), not guessed via a
+       static vh formula, which previously ran ~100px past the viewport
+       because it didn't know either one's actual rendered height. */
+    max-height: var(--browser-aside-max-height, calc(100vh - 220px));
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
 }
 
 .term-browser-toggle {
@@ -350,10 +398,16 @@ async function search(t: string) {
 .results-legend {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--s-4);
   margin-bottom: var(--s-4);
   font-size: 0.6875rem;
   color: var(--color-ink-3);
+}
+
+.legend-key {
+  font-weight: 600;
+  color: var(--color-ink-2);
 }
 
 .legend-item {

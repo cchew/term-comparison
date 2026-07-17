@@ -27,4 +27,14 @@ describe("CorpusStats", () => {
     await flushPromises();
     expect(wrapper.find(".corpus-stats").exists()).toBe(false);
   });
+
+  it("renders a placeholder with stable layout before the fetch resolves", () => {
+    // Regression: the guided tour's first step was positioned against the
+    // search box before this element existed, then the page shifted down
+    // once the real stats line rendered — the tour's highlight box ended up
+    // a line too high. A stable-height placeholder from first paint fixes it.
+    const wrapper = mount(CorpusStats);
+    expect(wrapper.find(".corpus-stats").exists()).toBe(true);
+    expect(wrapper.text()).toContain("Calculating corpus size");
+  });
 });
