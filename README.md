@@ -64,7 +64,7 @@ cd ../lex-au-graph
 pip install huggingface_hub
 python -c "from huggingface_hub import snapshot_download; snapshot_download(repo_id='cchew/lex-au', repo_type='dataset', local_dir='corpus', allow_patterns='xml/*')"
 lexaugraph build --corpus-dir corpus/
-cd ../term-comparison
+cd ../act-alike
 ```
 
 ## Run locally

@@ -17,7 +17,7 @@ dependencies = [
 ]
 
 [project.urls]
-Repository = "https://github.com/cchew/term-comparison"
+Repository = "https://github.com/cchew/act-alike"
 
 [project.scripts]
 term-comparison = "term_comparison.cli:cli"
