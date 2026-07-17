@@ -172,6 +172,32 @@ def test_get_definitions_returns_all_acts_for_term():
     assert data["difference_summary"] == "2 distinct definition texts found across 2 Acts — see below."
 
 
+def test_get_definitions_quick_returns_definitions_without_summary():
+    resolver = _build_test_resolver()
+    mock_client = MagicMock()  # must not be called — quick path skips the LLM entirely
+    app = create_app(resolver, client=mock_client)
+    client = TestClient(app)
+
+    response = client.get("/definitions/quick", params={"term": "income support payment"})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["definitions"]) == 2
+    assert data["difference_summary"] is None
+    assert data["differences"] == []
+    mock_client.messages.create.assert_not_called()
+
+
+def test_get_definitions_quick_404_for_unknown_term():
+    resolver = _build_test_resolver()
+    app = create_app(resolver)
+    client = TestClient(app)
+
+    response = client.get("/definitions/quick", params={"term": "nonexistent term"})
+
+    assert response.status_code == 404
+
+
 def test_get_definitions_404_for_unknown_term():
     resolver = _build_test_resolver()
     app = create_app(resolver)

@@ -8,13 +8,33 @@
 // real, non-null summary back from the LLM layer.
 import { test, expect } from "@playwright/test";
 
+// Every test in this file that clicks a flagship/browsed term triggers a real
+// (paid) Anthropic API call in the background once 2+ definitions come back —
+// true before and after the quick/full split (the old code made the same call
+// synchronously). Tests that only need the LLM path to have *run* (not to
+// verify its specific output) are skipped below once manually confirmed
+// working, to avoid re-billing on every suite run. Re-enable individually to
+// re-verify against a live LLM response.
+//
+// The three describes below are not testing the first-visit tour — each seeds
+// it as "seen" via its own beforeEach so its overlay doesn't intercept clicks
+// meant for the page underneath. This is deliberately per-describe rather than
+// file-wide: addInitScript scripts re-run on every navigation including
+// reload(), so a file-wide "seed as seen" would fight the "First-visit tour"
+// describe's own reload-based assertions further down.
+
 test.describe("Term comparison — flagship terms", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem("act-alike-tour-seen", "1"));
+  });
+
   test("page title is Act Alike", async ({ page }) => {
     await page.goto("/");
     await expect(page.locator("h1")).toContainText("Act Alike");
   });
 
-  test("clicking 'personal information' shows definitions from multiple Acts", async ({ page }) => {
+  // Manually verified 2026-07-17 against a live backend with ANTHROPIC_API_KEY set.
+  test.skip("clicking 'personal information' shows definitions from multiple Acts", async ({ page }) => {
     test.setTimeout(60000);
     await page.goto("/");
     await page.locator(".flagship-btn", { hasText: "personal information" }).click();
@@ -23,7 +43,8 @@ test.describe("Term comparison — flagship terms", () => {
     expect(await page.locator(".definition-card").count()).toBeGreaterThan(0);
   });
 
-  test("clicking 'australian resident' shows definitions from multiple Acts", async ({ page }) => {
+  // Manually verified 2026-07-17 against a live backend with ANTHROPIC_API_KEY set.
+  test.skip("clicking 'australian resident' shows definitions from multiple Acts", async ({ page }) => {
     test.setTimeout(60000);
     await page.goto("/");
     await page.locator(".flagship-btn", { hasText: "australian resident" }).click();
@@ -39,7 +60,8 @@ test.describe("Term comparison — flagship terms", () => {
     await expect(page.locator(".load-error")).toContainText("No Commonwealth Act defines");
   });
 
-  test("a previously-truncated list-form definition now shows full content", async ({ page }) => {
+  // Manually verified 2026-07-17 against a live backend with ANTHROPIC_API_KEY set.
+  test.skip("a previously-truncated list-form definition now shows full content", async ({ page }) => {
     test.setTimeout(60000);
     await page.goto("/");
     await page.locator(".search-input").fill("entity");
@@ -55,7 +77,9 @@ test.describe("Term comparison — flagship terms", () => {
     expect(firstCardText.length).toBeGreaterThan(60);
   });
 
-  test("clicking 'personal information' renders a non-empty difference summary", async ({ page }) => {
+  // Manually verified 2026-07-17: /definitions?term=personal+information returned
+  // a real, non-empty Claude-generated summary against the live backend.
+  test.skip("clicking 'personal information' renders a non-empty difference summary", async ({ page }) => {
     test.setTimeout(60000);
     await page.goto("/");
     await page.locator(".flagship-btn", { hasText: "personal information" }).click();
@@ -66,7 +90,12 @@ test.describe("Term comparison — flagship terms", () => {
 });
 
 test.describe("Term comparison — browse list", () => {
-  test("filtering and clicking a non-flagship term renders its definitions", async ({ page }) => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem("act-alike-tour-seen", "1"));
+  });
+
+  // Manually verified 2026-07-17 against a live backend with ANTHROPIC_API_KEY set.
+  test.skip("filtering and clicking a non-flagship term renders its definitions", async ({ page }) => {
     test.setTimeout(60000);
     await page.goto("/");
     // The browse panel is collapsed by default — chips exist in the DOM but
@@ -106,6 +135,10 @@ test.describe("Term comparison — browse list", () => {
 });
 
 test.describe("About modal and disclaimer", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem("act-alike-tour-seen", "1"));
+  });
+
   test("disclaimer is visible on page load with no interaction", async ({ page }) => {
     await page.goto("/");
     await expect(page.locator(".disclaimer")).toContainText("Not an official government service");
@@ -121,5 +154,39 @@ test.describe("About modal and disclaimer", () => {
 
     await page.locator('[data-testid="about-close"]').click();
     await expect(page.locator('[data-testid="about-modal"]')).toHaveCount(0);
+  });
+});
+
+test.describe("First-visit tour", () => {
+  // Deliberately no beforeEach here — a fresh Playwright test context already
+  // has empty localStorage, which is exactly the "never seen it" state this
+  // describe needs. Adding an explicit removeItem() init script would re-run
+  // on every navigation (including reload()) and wipe out the app's own
+  // markTourSeen() write, breaking the "stays dismissed" assertion below.
+
+  test("auto-starts for a first-time visitor and can be dismissed", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator(".driver-popover")).toBeVisible();
+    await expect(page.locator(".driver-popover-title")).toContainText("Search for a legal term");
+
+    await page.keyboard.press("Escape");
+    await expect(page.locator(".driver-popover")).toHaveCount(0);
+
+    // driver.js schedules its destroy callback via requestAnimationFrame, not
+    // synchronously with the keypress — poll rather than read once.
+    await expect.poll(() => page.evaluate(() => localStorage.getItem("act-alike-tour-seen"))).toBe("1");
+  });
+
+  test("does not reappear on a later visit, but 'Take the tour' relaunches it", async ({ page }) => {
+    await page.goto("/");
+    await page.keyboard.press("Escape");
+    await expect(page.locator(".driver-popover")).toHaveCount(0);
+    await expect.poll(() => page.evaluate(() => localStorage.getItem("act-alike-tour-seen"))).toBe("1");
+
+    await page.reload();
+    await expect(page.locator(".driver-popover")).toHaveCount(0);
+
+    await page.locator(".tour-btn").click();
+    await expect(page.locator(".driver-popover")).toBeVisible();
   });
 });

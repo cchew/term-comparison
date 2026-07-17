@@ -61,12 +61,11 @@ def create_app(resolver: DefinitionResolver, client: anthropic.Anthropic | None 
         allow_headers=["*"],
     )
 
-    @app.get("/definitions", response_model=ComparisonResponse)
-    def get_definitions(term: str) -> ComparisonResponse:
+    def _resolve_definitions(term: str) -> list[DefinitionOut]:
         results = resolver.find_all_definitions(term)
         if not results:
             raise HTTPException(status_code=404, detail=f"No definitions found for '{term}'")
-        definitions = [
+        return [
             DefinitionOut(
                 display_term=r.display_term,
                 definition_text=r.definition_text,
@@ -76,6 +75,19 @@ def create_app(resolver: DefinitionResolver, client: anthropic.Anthropic | None 
             )
             for r in results
         ]
+
+    @app.get("/definitions/quick", response_model=ComparisonResponse)
+    def get_definitions_quick(term: str) -> ComparisonResponse:
+        """Definitions only, no LLM call — lets the frontend render Act panels
+        immediately instead of waiting on the difference-summary round trip,
+        which is what actually scales with how many Acts there are to compare.
+        """
+        definitions = _resolve_definitions(term)
+        return ComparisonResponse(term=term, definitions=definitions, difference_summary=None, differences=[])
+
+    @app.get("/definitions", response_model=ComparisonResponse)
+    def get_definitions(term: str) -> ComparisonResponse:
+        definitions = _resolve_definitions(term)
         diff_result = None
         if client is not None:
             try:

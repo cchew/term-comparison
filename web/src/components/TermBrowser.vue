@@ -53,11 +53,14 @@ onMounted(async () => {
 
 <style scoped>
 .term-browser {
-  margin-bottom: var(--s-5);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .term-filter-input {
   width: 100%;
+  flex-shrink: 0;
   font-family: var(--font-ui);
   font-size: 0.8125rem;
   padding: var(--s-2) var(--s-3);
@@ -71,8 +74,10 @@ onMounted(async () => {
 .term-chips {
   display: flex;
   flex-wrap: wrap;
+  align-content: flex-start;
   gap: var(--s-1);
-  max-height: 220px;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
 }
 

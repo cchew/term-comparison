@@ -34,7 +34,15 @@ onUnmounted(() => {
 
       <section class="modal-section">
         <h2>How it's built</h2>
-        <p class="pipeline mono">legislation.gov.au DOCX &rarr; AKN 3.0 XML (lex-au) &rarr; definition graph (lex-au-graph) &rarr; FastAPI + Claude difference-summary (this repo) &rarr; what you're looking at now</p>
+        <div class="pipeline-diagram" role="img" aria-label="legislation.gov.au DOCX flows to AKN 3.0 XML via lex-au, then to a definition graph, then to what you're looking at now">
+          <span class="pipeline-step">legislation.gov.au DOCX</span>
+          <span class="pipeline-arrow mono" aria-hidden="true">&rarr;</span>
+          <span class="pipeline-step">AKN 3.0 XML (lex-au)</span>
+          <span class="pipeline-arrow mono" aria-hidden="true">&rarr;</span>
+          <span class="pipeline-step">definition graph</span>
+          <span class="pipeline-arrow mono" aria-hidden="true">&rarr;</span>
+          <span class="pipeline-step pipeline-step--current">what you're looking at now</span>
+        </div>
       </section>
 
       <section class="modal-section">
@@ -50,7 +58,11 @@ onUnmounted(() => {
       </section>
 
       <section class="modal-section">
-        <h2>Scope</h2>
+        <h2>Code &amp; feedback</h2>
+        <p>Source and issue tracker: <a href="https://github.com/cchew/act-alike" target="_blank" rel="noopener noreferrer">github.com/cchew/act-alike</a>. Bug reports and feature requests welcome there.</p>
+      </section>
+
+      <section class="modal-section">
         <p class="scope-declaration" data-testid="scope-declaration">Not an official government service. Does not provide legal advice or compliance conclusions.</p>
       </section>
     </div>
@@ -107,7 +119,33 @@ onUnmounted(() => {
 .modal-section ul { padding-left: var(--s-4); }
 .modal-section li { margin-bottom: var(--s-2); }
 
-.pipeline { word-break: break-word; }
+.pipeline-diagram {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.pipeline-step {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  padding: var(--s-1) var(--s-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-raised);
+  color: var(--color-ink-2);
+}
+
+.pipeline-step--current {
+  border-color: var(--color-accent-border);
+  background: var(--color-accent-bg);
+  color: var(--color-ink);
+}
+
+.pipeline-arrow {
+  color: var(--color-ink-3);
+  font-size: 0.75rem;
+}
 
 .scope-declaration {
   font-size: 0.75rem;

@@ -15,11 +15,15 @@ onMounted(async () => {
     console.error("CorpusStats: failed to load /stats", e);
   }
 });
+
+function formatted(n: number): string {
+  return Number.isFinite(n) ? n.toLocaleString("en-AU") : String(n);
+}
 </script>
 
 <template>
   <p v-if="stats" class="corpus-stats mono">
-    {{ stats.acts }} Acts · {{ stats.defined_terms }} defined terms · {{ stats.multi_act_terms }} defined 3+ times
+    {{ formatted(stats.acts) }} Acts · {{ formatted(stats.defined_terms) }} defined terms · {{ formatted(stats.multi_act_terms) }} defined 3+ times
   </p>
 </template>
 

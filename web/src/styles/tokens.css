@@ -25,6 +25,12 @@
   --chip-source-text: oklch(35% 0.05 250);
   --chip-source-border: oklch(80% 0.03 250);
 
+  /* Corpus-coverage warning — a different hue from the accent highlight (80)
+     so "quoted passage" and "coverage gap" never look like the same signal. */
+  --color-warning-bg: oklch(95% 0.05 50);
+  --color-warning-text: oklch(35% 0.1 40);
+  --color-warning-border: oklch(70% 0.12 45);
+
   /* Typography */
   --font-ui: 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'IBM Plex Mono', 'Fira Code', monospace;

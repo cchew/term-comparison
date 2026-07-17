@@ -82,6 +82,7 @@ term-comparison serve
 
 ## Versions
 
+- **v0.1.3** - Polish pass: guided first-visit tour, progressive quick/full results split, corpus-coverage warning banner, panel-style legend, sticky footer, build-pipeline diagram, GitHub repo link.
 - **v0.1.2** - Trust/reliability pass: deterministic fallback summary, persistent disclaimer, "How this works" trust modal, e2e/a11y coverage.
 - **v0.1.1** - Search UX pass: instructional copy, hidden-by-default term browser, flagship shortcuts, reflowing browse panel, verification fallback messaging.
 - **v0.1.0** - First tagged release. Renamed "Act Alike". Corpus stats bar, term browser, quote-verified highlighting, citations, accessibility scan + fixes.

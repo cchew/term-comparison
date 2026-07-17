@@ -17,7 +17,7 @@ describe("CorpusStats", () => {
     await flushPromises();
     const text = wrapper.text();
     expect(text).toContain("24");
-    expect(text).toContain("1893");
+    expect(text).toContain("1,893");
     expect(text).toContain("105");
   });
 
